@@ -6,175 +6,567 @@
   <title>Cloud Mining Mini App</title>
   <script src="https://telegram.org/js/telegram-web-app.js"></script>
   <style>
-    * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; user-select: none; }
-    body { background: radial-gradient(circle at top, #10192b, #070a12 70%); color: #fff; min-height: 100vh; padding: 16px 16px 90px; }
+    * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; user-select: none; -webkit-tap-highlight-color: transparent; }
+    body { background: radial-gradient(circle at top, #10192b, #070a12 70%); color: #fff; min-height: 100vh; padding: 16px 16px 95px; overflow-x: hidden; }
     
     /* Header */
-    .header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 20px; }
+    .header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 18px; }
     .logo-box { display: flex; align-items: center; gap: 10px; }
-    .logo-circle { width: 48px; height: 48px; border-radius: 50%; background: #1a2639; border: 2px solid #2e4365; display: flex; align-items: center; justify-content: center; font-weight: bold; color: #38bdf8; }
+    .logo-circle { width: 46px; height: 46px; border-radius: 50%; background: #1a2639; border: 2px solid #38bdf8; display: flex; align-items: center; justify-content: center; font-weight: 800; font-size: 13px; color: #38bdf8; box-shadow: 0 0 12px rgba(56, 189, 248, 0.25); }
     .title h2 { font-size: 16px; font-weight: 700; }
-    .title p { font-size: 11px; color: #64748b; letter-spacing: 1px; }
+    .title p { font-size: 10px; color: #64748b; letter-spacing: 1px; }
     .badge { background: #131c2e; border: 1px solid #26354d; padding: 6px 12px; border-radius: 20px; font-size: 12px; color: #cbd5e1; }
 
+    /* Pages Visibility */
+    .page { display: none; animation: fadeIn 0.2s ease-in-out; }
+    .page.active { display: block; }
+    @keyframes fadeIn { from { opacity: 0; transform: translateY(5px); } to { opacity: 1; transform: translateY(0); } }
+
     /* Cards */
-    .card { background: rgba(19, 28, 46, 0.85); border: 1px solid #1e293b; border-radius: 20px; padding: 18px; margin-bottom: 14px; box-shadow: 0 8px 25px rgba(0,0,0,0.4); }
+    .card { background: rgba(19, 28, 46, 0.88); border: 1px solid #1e293b; border-radius: 20px; padding: 18px; margin-bottom: 14px; box-shadow: 0 8px 25px rgba(0,0,0,0.4); }
     .card-header { display: flex; justify-content: space-between; font-size: 12px; color: #64748b; margin-bottom: 10px; }
-    .balance-val { font-size: 32px; font-weight: 800; letter-spacing: 0.5px; }
-    .balance-val span { font-size: 16px; color: #94a3b8; font-weight: 500; }
+    .balance-val { font-size: 30px; font-weight: 800; letter-spacing: 0.5px; }
+    .unit { font-size: 15px; color: #94a3b8; font-weight: 600; }
 
     /* Active Mining */
-    .status-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; }
+    .status-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
     .running { font-size: 12px; color: #0ea5e9; display: flex; align-items: center; gap: 6px; margin-top: 2px; }
     .dot { width: 8px; height: 8px; background: #0ea5e9; border-radius: 50%; box-shadow: 0 0 8px #0ea5e9; }
-    .mined-now { font-size: 30px; font-weight: 800; color: #38bdf8; margin: 12px 0; }
-    .mined-now span { font-size: 16px; color: #64748b; font-weight: 500; }
+    .mined-now { font-size: 28px; font-weight: 800; color: #38bdf8; margin: 12px 0; }
     
     /* Progress Bar */
     .prog-text { display: flex; justify-content: space-between; font-size: 12px; color: #64748b; margin-bottom: 8px; }
     .prog-bg { width: 100%; height: 7px; background: #0f172a; border-radius: 10px; overflow: hidden; }
-    .prog-fill { width: 43%; height: 100%; background: linear-gradient(90deg, #eab308, #38bdf8, #6366f1); border-radius: 10px; }
+    .prog-fill { width: 0%; height: 100%; background: linear-gradient(90deg, #eab308, #38bdf8, #6366f1); border-radius: 10px; transition: width 0.3s; }
 
     /* 3 Stats Grid */
     .stats-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-bottom: 16px; }
-    .stat-box { background: rgba(19, 28, 46, 0.85); border: 1px solid #1e293b; border-radius: 18px; padding: 14px 10px; text-align: center; }
-    .stat-label { font-size: 11px; color: #64748b; margin-bottom: 8px; }
-    .stat-num { font-size: 18px; font-weight: 700; color: #fff; margin-bottom: 4px; }
+    .stat-box { background: rgba(19, 28, 46, 0.88); border: 1px solid #1e293b; border-radius: 18px; padding: 14px 8px; text-align: center; }
+    .stat-label { font-size: 11px; color: #64748b; margin-bottom: 6px; }
+    .stat-num { font-size: 17px; font-weight: 700; color: #fff; margin-bottom: 4px; }
     .stat-sub { font-size: 11px; color: #475569; }
 
-    /* Claim Button */
-    .claim-btn { width: 100%; padding: 16px; border-radius: 25px; border: 1px solid #2dd4bf; background: linear-gradient(180deg, #115e59, #0f3d3e); color: #fff; font-size: 16px; font-weight: 700; cursor: pointer; transition: 0.2s; margin-bottom: 16px; box-shadow: 0 4px 15px rgba(20, 184, 166, 0.25); }
-    .claim-btn:active { transform: scale(0.97); }
+    /* Buttons */
+    .btn-main { width: 100%; padding: 15px; border-radius: 25px; border: 1px solid #2dd4bf; background: linear-gradient(180deg, #115e59, #0f3d3e); color: #fff; font-size: 15px; font-weight: 700; cursor: pointer; transition: 0.15s; margin-bottom: 14px; box-shadow: 0 4px 15px rgba(20, 184, 166, 0.25); }
+    .btn-main:active { transform: scale(0.97); }
+    .btn-blue { background: linear-gradient(135deg, #0284c7, #2563eb); border: 1px solid #38bdf8; box-shadow: 0 4px 15px rgba(56, 189, 248, 0.25); }
+
+    /* Upgrade & List Items */
+    .item-row { display: flex; justify-content: space-between; align-items: center; background: #0f172a; border: 1px solid #1e293b; padding: 14px; border-radius: 16px; margin-bottom: 10px; }
+    .item-info h4 { font-size: 14px; margin-bottom: 4px; color: #f8fafc; }
+    .item-info p { font-size: 12px; color: #38bdf8; }
+    .buy-btn { background: #1e293b; border: 1px solid #38bdf8; color: #38bdf8; padding: 8px 14px; border-radius: 12px; font-size: 12px; font-weight: 700; cursor: pointer; }
+    .buy-btn:active { background: #38bdf8; color: #000; }
+
+    /* Inputs (Admin & Withdraw) */
+    .form-group { margin-bottom: 12px; text-align: left; }
+    .form-group label { display: block; font-size: 12px; color: #94a3b8; margin-bottom: 5px; }
+    .input-box { width: 100%; padding: 12px 14px; border-radius: 12px; border: 1px solid #26354d; background: #0b111e; color: #fff; font-size: 14px; outline: none; }
+    .input-box:focus { border-color: #38bdf8; }
+
+    /* Admin Specific (RTL Arabic) */
+    .admin-wrap { direction: rtl; text-align: right; }
+    .admin-wrap .form-group { text-align: right; }
+    .admin-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
 
     /* Bottom Nav */
-    .bottom-nav { position: fixed; bottom: 0; left: 0; right: 0; height: 70px; background: #0b111e; border-top: 1px solid #1e293b; display: flex; justify-content: space-around; align-items: center; padding: 0 10px; }
-    .nav-item { text-align: center; color: #64748b; font-size: 11px; cursor: pointer; flex: 1; }
-    .nav-item.active { color: #38bdf8; }
-    .nav-icon { font-size: 18px; display: block; margin-bottom: 4px; }
-    .center-fab { width: 56px; height: 56px; border-radius: 50%; background: linear-gradient(135deg, #38bdf8, #818cf8); display: flex; align-items: center; justify-content: center; margin-top: -28px; border: 4px solid #070a12; color: #070a12; font-size: 22px; font-weight: bold; }
+    .bottom-nav { position: fixed; bottom: 0; left: 0; right: 0; height: 72px; background: #0b111e; border-top: 1px solid #1e293b; display: flex; justify-content: space-around; align-items: center; padding: 0 8px; z-index: 100; }
+    .nav-item { text-align: center; color: #64748b; font-size: 11px; cursor: pointer; flex: 1; padding: 6px 0; }
+    .nav-item.active { color: #38bdf8; font-weight: 600; }
+    .nav-icon { font-size: 19px; display: block; margin-bottom: 3px; }
+    .center-fab { width: 54px; height: 54px; border-radius: 50%; background: linear-gradient(135deg, #38bdf8, #818cf8); display: flex; align-items: center; justify-content: center; margin-top: -26px; border: 4px solid #070a12; color: #070a12; font-size: 22px; font-weight: bold; cursor: pointer; box-shadow: 0 4px 12px rgba(56, 189, 248, 0.35); }
+    
+    /* Toast Notification */
+    #toast { position: fixed; top: 16px; left: 50%; transform: translateX(-50%); background: #10b981; color: #fff; padding: 10px 20px; border-radius: 20px; font-size: 13px; font-weight: 600; display: none; z-index: 999; box-shadow: 0 4px 15px rgba(0,0,0,0.5); }
   </style>
 </head>
 <body>
 
+  <div id="toast">تم الحفظ بنجاح!</div>
+
   <!-- Header -->
   <div class="header">
     <div class="logo-box">
-      <div class="logo-circle">NGM</div>
+      <div class="logo-circle" id="ui-logo">NGM</div>
       <div class="title">
-        <h2>NGM Cloud</h2>
+        <h2 id="ui-appname">NGM Cloud</h2>
         <p>CLOUD MINING</p>
       </div>
     </div>
     <div class="badge" id="user-badge">EN</div>
   </div>
 
-  <!-- Balance Card -->
-  <div class="card">
-    <div class="card-header">
-      <span>🔗 In-app balance</span>
-      <span>In game · Does not affect level</span>
-    </div>
-    <div class="balance-val"><span id="total-balance" style="font-size:32px;color:#fff;font-weight:800;">6601.57046</span> <span>NGM</span></div>
-  </div>
-
-  <!-- Active Mining Card -->
-  <div class="card">
-    <div class="status-row">
-      <div>
-        <div style="font-size: 15px; font-weight: 600;">⛏️ Active mining</div>
-        <div class="running"><span class="dot"></span> Running</div>
+  <!-- ================= 1. MINING PAGE ================= -->
+  <div id="page-mining" class="page active">
+    <div class="card">
+      <div class="card-header">
+        <span>🔗 In-app balance</span>
+        <span>In game · Verified</span>
       </div>
-      <div class="badge">Epochs ?</div>
+      <div class="balance-val">
+        <span id="total-balance">0.00000</span> <span class="unit coin-sym">NGM</span>
+      </div>
     </div>
-    <div class="mined-now">+<span id="mined-counter" style="font-size:30px;color:#38bdf8;font-weight:800;">2.97445</span> <span>NGM</span></div>
-    <div class="prog-text">
-      <span>To level 4: +650 NGM to wallet</span>
-      <span id="prog-pct">43%</span>
+
+    <div class="card">
+      <div class="status-row">
+        <div>
+          <div style="font-size: 15px; font-weight: 600;">⛏️ Active mining</div>
+          <div class="running"><span class="dot"></span> Running</div>
+        </div>
+        <div class="badge" id="level-badge">Level 1</div>
+      </div>
+      <div class="mined-now">+<span id="mined-counter">0.00000</span> <span class="unit coin-sym">NGM</span></div>
+      <div class="prog-text">
+        <span id="next-lvl-text">Next level target: 1000</span>
+        <span id="prog-pct">0%</span>
+      </div>
+      <div class="prog-bg"><div class="prog-fill" id="prog-bar"></div></div>
     </div>
-    <div class="prog-bg"><div class="prog-fill" id="prog-bar"></div></div>
+
+    <div class="stats-grid">
+      <div class="stat-box">
+        <div class="stat-label">⚡ Per hour</div>
+        <div class="stat-num" id="rate-hour">24.9</div>
+        <div class="stat-sub coin-sym">NGM</div>
+      </div>
+      <div class="stat-box">
+        <div class="stat-label">📅 Per day</div>
+        <div class="stat-num" id="rate-day">~597</div>
+        <div class="stat-sub coin-sym">NGM</div>
+      </div>
+      <div class="stat-box">
+        <div class="stat-label">🚀 Boost</div>
+        <div class="stat-num">×<span id="rate-boost">1.4</span></div>
+        <div class="stat-sub">multiplier</div>
+      </div>
+    </div>
+
+    <button class="btn-main" onclick="claimMined()">⚡ Claim mined</button>
+
+    <div class="card" style="text-align: center; padding: 14px;">
+      <span style="font-size: 15px; font-weight: 600;" id="league-name">Bronze league</span>
+      <span class="badge" style="margin-left: 8px; color: #38bdf8;" id="league-lvl">Lvl 1</span>
+    </div>
   </div>
 
-  <!-- Stats Grid -->
-  <div class="stats-grid">
-    <div class="stat-box">
-      <div class="stat-label">⚡ Per hour</div>
-      <div class="stat-num" id="rate-hour">24.9</div>
-      <div class="stat-sub">NGM</div>
+  <!-- ================= 2. EXCHANGE / BOOST PAGE ================= -->
+  <div id="page-exchange" class="page">
+    <div class="card">
+      <h3 style="margin-bottom: 6px; font-size: 18px;">🚀 Upgrade Center</h3>
+      <p style="font-size: 12px; color: #94a3b8; margin-bottom: 16px;">Use your mined coins to increase your hourly cloud mining speed.</p>
+
+      <div class="item-row">
+        <div class="item-info">
+          <h4>⚡ GPU Miner v1</h4>
+          <p>+10 <span class="coin-sym">NGM</span> / hour</p>
+        </div>
+        <button class="buy-btn" onclick="buyUpgrade(10, 0, 100)">100 <span class="coin-sym">NGM</span></button>
+      </div>
+
+      <div class="item-row">
+        <div class="item-info">
+          <h4>🔥 ASIC Cloud Server</h4>
+          <p>+35 <span class="coin-sym">NGM</span> / hour</p>
+        </div>
+        <button class="buy-btn" onclick="buyUpgrade(35, 0, 300)">300 <span class="coin-sym">NGM</span></button>
+      </div>
+
+      <div class="item-row">
+        <div class="item-info">
+          <h4>🚀 Overclock Multiplier</h4>
+          <p>+0.5x Boost Multiplier</p>
+        </div>
+        <button class="buy-btn" onclick="buyUpgrade(0, 0.5, 500)">500 <span class="coin-sym">NGM</span></button>
+      </div>
     </div>
-    <div class="stat-box">
-      <div class="stat-label">📅 Per day</div>
-      <div class="stat-num">~597</div>
-      <div class="stat-sub">NGM</div>
-    </div>
-    <div class="stat-box">
-      <div class="stat-label">🚀 Boost</div>
-      <div class="stat-num">×1.4</div>
-      <div class="stat-sub">multiplier</div>
+
+    <div class="card">
+      <h3 style="margin-bottom: 12px; font-size: 16px;">🎁 Daily Tasks</h3>
+      <div class="item-row">
+        <div class="item-info">
+          <h4>📢 Join Official Channel</h4>
+          <p>Reward: +<span id="task-reward-val">250</span> <span class="coin-sym">NGM</span></p>
+        </div>
+        <button class="buy-btn" id="task-btn" onclick="claimTask()">Claim</button>
+      </div>
     </div>
   </div>
 
-  <!-- Claim Button -->
-  <button class="claim-btn" onclick="claimMined()">⚡ Claim mined</button>
+  <!-- ================= 3. FRIENDS PAGE ================= -->
+  <div id="page-friends" class="page">
+    <div class="card" style="text-align: center;">
+      <div style="font-size: 38px; margin-bottom: 8px;">👥</div>
+      <h3 style="margin-bottom: 6px;">Invite Friends & Earn</h3>
+      <p style="font-size: 13px; color: #94a3b8; margin-bottom: 18px;">
+        Get <strong style="color:#38bdf8;">+<span id="ref-reward-ui">500</span> <span class="coin-sym">NGM</span></strong> for each friend who joins through your link!
+      </p>
 
-  <!-- League Card -->
-  <div class="card" style="text-align: center; padding: 14px;">
-    <span style="font-size: 15px; font-weight: 600;">Bronze league</span>
-    <span class="badge" style="margin-left: 8px; color: #38bdf8;">Lvl 3</span>
+      <div class="form-group">
+        <label>Your Referral Link:</label>
+        <input type="text" id="ref-link-input" class="input-box" readonly>
+      </div>
+
+      <button class="btn-main btn-blue" onclick="copyRefLink()">📋 Copy Invite Link</button>
+      <button class="btn-main" style="margin-bottom:0;" onclick="simulateFriend()">➕ Test Add Friend (Demo)</button>
+    </div>
+
+    <div class="card">
+      <div style="display:flex; justify-content:space-between; align-items:center;">
+        <span style="font-size: 14px; font-weight:600;">Total Invited Friends</span>
+        <span class="badge" id="ref-count-ui" style="color:#38bdf8; font-weight:700;">0 Friends</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- ================= 4. WITHDRAW PAGE ================= -->
+  <div id="page-withdraw" class="page">
+    <div class="card">
+      <h3 style="margin-bottom: 6px; font-size: 18px;">👛 Withdraw Funds</h3>
+      <p style="font-size: 12px; color: #94a3b8; margin-bottom: 16px;">
+        Minimum withdrawal: <strong style="color:#38bdf8;"><span id="min-wd-ui">5000</span> <span class="coin-sym">NGM</span></strong>
+      </p>
+
+      <div class="form-group">
+        <label>Select Network:</label>
+        <select id="wd-network" class="input-box">
+          <option value="TON">TON Network (TON)</option>
+          <option value="USDT-TRC20">USDT (TRC20)</option>
+          <option value="Binance">Binance Pay ID</option>
+        </select>
+      </div>
+
+      <div class="form-group">
+        <label>Wallet Address / ID:</label>
+        <input type="text" id="wd-address" class="input-box" placeholder="Enter your wallet address...">
+      </div>
+
+      <div class="form-group">
+        <label>Amount (<span class="coin-sym">NGM</span>):</label>
+        <input type="number" id="wd-amount" class="input-box" placeholder="0.00">
+      </div>
+
+      <button class="btn-main" onclick="requestWithdraw()">💸 Request Withdrawal</button>
+    </div>
+
+    <div class="card">
+      <h4 style="margin-bottom: 10px; font-size: 14px; color:#94a3b8;">Recent Withdrawals</h4>
+      <div id="wd-history" style="font-size: 12px; color: #64748b; text-align: center; padding: 10px;">
+        No withdrawal requests yet.
+      </div>
+    </div>
+  </div>
+
+  <!-- ================= 5. OWNER ADMIN PANEL ================= -->
+  <div id="page-admin" class="page admin-wrap">
+    <div class="card">
+      <h3 style="margin-bottom: 6px; color: #38bdf8;">⚙️ لوحة تحكم صاحب البوت</h3>
+      <p style="font-size: 12px; color: #94a3b8; margin-bottom: 16px;">عدّل أي رقم أو اسم هنا واضغط حفظ، وهيتطبق فوراً في البوت بالكامل.</p>
+
+      <div class="admin-grid">
+        <div class="form-group">
+          <label>اسم البوت / المشروع:</label>
+          <input type="text" id="adm-name" class="input-box">
+        </div>
+        <div class="form-group">
+          <label>رمز العملة (مثل NGM):</label>
+          <input type="text" id="adm-sym" class="input-box">
+        </div>
+      </div>
+
+      <div class="admin-grid">
+        <div class="form-group">
+          <label>سرعة التعدين بالساعة:</label>
+          <input type="number" step="0.1" id="adm-hour" class="input-box">
+        </div>
+        <div class="form-group">
+          <label>المضاعف (Boost):</label>
+          <input type="number" step="0.1" id="adm-boost" class="input-box">
+        </div>
+      </div>
+
+      <div class="admin-grid">
+        <div class="form-group">
+          <label>مكافأة دعوة الصديق:</label>
+          <input type="number" id="adm-ref" class="input-box">
+        </div>
+        <div class="form-group">
+          <label>الحد الأدنى للسحب:</label>
+          <input type="number" id="adm-minwd" class="input-box">
+        </div>
+      </div>
+
+      <div class="admin-grid">
+        <div class="form-group">
+          <label>يوزر البوت (بدون @):</label>
+          <input type="text" id="adm-botuser" class="input-box">
+        </div>
+        <div class="form-group">
+          <label>الرقم السري للوحة الأدمن:</label>
+          <input type="text" id="adm-pin" class="input-box">
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label>تعديل رصيدك الحالي يدوياً:</label>
+        <input type="number" step="0.01" id="adm-balance" class="input-box">
+      </div>
+
+      <button class="btn-main btn-blue" onclick="saveAdminSettings()">💾 حفظ وتطبيق التعديلات</button>
+      <button class="btn-main" style="background:#7f1d1d; border-color:#ef4444; margin-bottom:0;" onclick="resetAllData()">🗑️ تصفير الحساب وإعادة الضبط</button>
+    </div>
   </div>
 
   <!-- Bottom Navigation -->
   <div class="bottom-nav">
-    <div class="nav-item active"><span class="nav-icon">⛏️</span>Mining</div>
-    <div class="nav-item"><span class="nav-icon">🏪</span>Exchange</div>
-    <div class="center-fab">🥞</div>
-    <div class="nav-item"><span class="nav-icon">👤</span>Friends</div>
-    <div class="nav-item"><span class="nav-icon">👛</span>Withdraw</div>
+    <div class="nav-item active" onclick="switchTab('mining', this)"><span class="nav-icon">⛏️</span>Mining</div>
+    <div class="nav-item" onclick="switchTab('exchange', this)"><span class="nav-icon">🏪</span>Exchange</div>
+    <div class="center-fab" onclick="openAdminAuth()" title="لوحة الأدمن">⚙️</div>
+    <div class="nav-item" onclick="switchTab('friends', this)"><span class="nav-icon">👤</span>Friends</div>
+    <div class="nav-item" onclick="switchTab('withdraw', this)"><span class="nav-icon">👛</span>Withdraw</div>
   </div>
 
   <script>
     const tg = window.Telegram.WebApp;
     tg.expand();
 
-    // عرض اسم المستخدم من تليجرام إن وجد
-    if (tg.initDataUnsafe?.user?.first_name) {
-      document.getElementById('user-badge').innerText = tg.initDataUnsafe.user.first_name;
+    // بيانات المستخدم من تليجرام
+    const tgUser = tg.initDataUnsafe?.user || { id: 123456789, first_name: "Admin" };
+    if (tgUser.first_name) {
+      document.getElementById('user-badge').innerText = tgUser.first_name;
     }
 
-    // إعدادات التعدين والرصيد (تحفظ محلياً للتجربة)
-    let totalBalance = parseFloat(localStorage.getItem('ngm_balance')) || 6601.57046;
-    let lastClaim = parseInt(localStorage.getItem('ngm_last_claim')) || (Date.now() - 430000);
-    const perHour = 24.9;
-    const boost = 1.4;
-    const ratePerSecond = (perHour * boost) / 3600; // السرعة في الثانية الواحدة
+    // الإعدادات الافتراضية القابلة للتعديل من لوحة الأدمن
+    const defaultConfig = {
+      appName: "NGM Cloud",
+      coinSym: "NGM",
+      perHour: 24.9,
+      boost: 1.4,
+      refReward: 500,
+      minWithdraw: 5000,
+      botUsername: "MyCloudNgm_bot",
+      adminPin: "1234"
+    };
 
-    const balanceEl = document.getElementById('total-balance');
-    const minedEl = document.getElementById('mined-counter');
+    let config = JSON.parse(localStorage.getItem('bot_config')) || defaultConfig;
+    let totalBalance = parseFloat(localStorage.getItem('ngm_balance')) ?? 0.00000;
+    let lastClaim = parseInt(localStorage.getItem('ngm_last_claim')) || Date.now();
+    let refCount = parseInt(localStorage.getItem('ngm_refs')) || 0;
+    let wdList = JSON.parse(localStorage.getItem('ngm_withdrawals')) || [];
 
-    function updateMining() {
-      const now = Date.now();
-      const elapsedSeconds = (now - lastClaim) / 1000;
-      const currentMined = elapsedSeconds * ratePerSecond;
+    function showToast(msg, color = "#10b981") {
+      const t = document.getElementById('toast');
+      t.innerText = msg;
+      t.style.background = color;
+      t.style.display = 'block';
+      setTimeout(() => t.style.display = 'none', 2500);
+    }
+
+    // تطبيق إعدادات الأدمن على كل الشاشات
+    function applyUI() {
+      document.getElementById('ui-appname').innerText = config.appName;
+      document.getElementById('ui-logo').innerText = config.coinSym.substring(0, 4);
+      document.querySelectorAll('.coin-sym').forEach(el => el.innerText = config.coinSym);
       
-      minedEl.innerText = currentMined.toFixed(5);
-      balanceEl.innerText = totalBalance.toFixed(5);
+      document.getElementById('rate-hour').innerText = config.perHour.toFixed(1);
+      document.getElementById('rate-day').innerText = "~" + Math.round(config.perHour * config.boost * 24);
+      document.getElementById('rate-boost').innerText = config.boost.toFixed(1);
+      
+      document.getElementById('ref-reward-ui').innerText = config.refReward;
+      document.getElementById('min-wd-ui').innerText = config.minWithdraw;
+      document.getElementById('ref-count-ui').innerText = refCount + " Friends";
+      document.getElementById('ref-link-input').value = `https://t.me/${config.botUsername}?start=${tgUser.id}`;
+
+      // حساب المستوى (كل 1000 عملة مستوى جديد)
+      const lvl = Math.floor(totalBalance / 1000) + 1;
+      const pct = Math.min(100, Math.floor(((totalBalance % 1000) / 1000) * 100));
+      document.getElementById('level-badge').innerText = "Level " + lvl;
+      document.getElementById('league-lvl').innerText = "Lvl " + lvl;
+      document.getElementById('next-lvl-text').innerText = `To level ${lvl + 1}: ${lvl * 1000} ${config.coinSym}`;
+      document.getElementById('prog-pct').innerText = pct + "%";
+      document.getElementById('prog-bar').style.width = pct + "%";
+
+      renderWithdrawHistory();
     }
 
+    // تحديث عداد التعدين الحي
+    function updateMining() {
+      const ratePerSecond = (config.perHour * config.boost) / 3600;
+      const elapsedSeconds = (Date.now() - lastClaim) / 1000;
+      const currentMined = elapsedSeconds * ratePerSecond;
+
+      document.getElementById('mined-counter').innerText = currentMined.toFixed(5);
+      document.getElementById('total-balance').innerText = totalBalance.toFixed(5);
+    }
+
+    // جمع العملات المعدنة
     function claimMined() {
-      const now = Date.now();
-      const elapsedSeconds = (now - lastClaim) / 1000;
+      const ratePerSecond = (config.perHour * config.boost) / 3600;
+      const elapsedSeconds = (Date.now() - lastClaim) / 1000;
       const currentMined = elapsedSeconds * ratePerSecond;
 
       totalBalance += currentMined;
-      lastClaim = now;
+      lastClaim = Date.now();
 
       localStorage.setItem('ngm_balance', totalBalance);
       localStorage.setItem('ngm_last_claim', lastClaim);
 
+      applyUI();
       updateMining();
-      if (tg.HapticFeedback) tg.HapticFeedback.impactOccurred('medium');
+      showToast(`⚡ Claimed +${currentMined.toFixed(4)} ${config.coinSym}`);
     }
 
-    // تحديث العداد كل 100 مللي ثانية ليظهر متحركاً بسرعة
+    // شراء ترقيات السرعة من متجر Exchange
+    function buyUpgrade(addHour, addBoost, cost) {
+      if (totalBalance < cost) {
+        showToast("❌ رصيدك غير كافي للشراء!", "#ef4444");
+        return;
+      }
+      totalBalance -= cost;
+      config.perHour += addHour;
+      config.boost = parseFloat((config.boost + addBoost).toFixed(2));
+
+      localStorage.setItem('ngm_balance', totalBalance);
+      localStorage.setItem('bot_config', JSON.stringify(config));
+      applyUI();
+      showToast("🚀 تم ترقية سرعة التعدين بنجاح!");
+    }
+
+    // مهمة يومية
+    function claimTask() {
+      if (localStorage.getItem('task_done')) {
+        showToast("تم استلام المكافأة مسبقاً!", "#f59e0b");
+        return;
+      }
+      totalBalance += 250;
+      localStorage.setItem('ngm_balance', totalBalance);
+      localStorage.setItem('task_done', 'true');
+      document.getElementById('task-btn').innerText = "Done ✅";
+      applyUI();
+      showToast("🎁 حصلت على +250 " + config.coinSym);
+    }
+
+    // نسخ رابط الإحالة
+    function copyRefLink() {
+      const linkInput = document.getElementById('ref-link-input');
+      linkInput.select();
+      navigator.clipboard.writeText(linkInput.value);
+      showToast("📋 تم نسخ رابط الدعوة!");
+    }
+
+    // تجربة إضافة صديق
+    function simulateFriend() {
+      refCount++;
+      totalBalance += config.refReward;
+      localStorage.setItem('ngm_refs', refCount);
+      localStorage.setItem('ngm_balance', totalBalance);
+      applyUI();
+      showToast(`🎉 انضم صديق جديد! +${config.refReward} ${config.coinSym}`);
+    }
+
+    // طلب سحب الرصيد
+    function requestWithdraw() {
+      const net = document.getElementById('wd-network').value;
+      const addr = document.getElementById('wd-address').value.trim();
+      const amt = parseFloat(document.getElementById('wd-amount').value);
+
+      if (!addr) return showToast("⚠️ أدخل عنوان المحفظة أولاً", "#ef4444");
+      if (isNaN(amt) || amt < config.minWithdraw) {
+        return showToast(`⚠️ الحد الأدنى للسحب هو ${config.minWithdraw} ${config.coinSym}`, "#ef4444");
+      }
+      if (amt > totalBalance) return showToast("❌ رصيدك لا يكفي لهذا المبلغ", "#ef4444");
+
+      totalBalance -= amt;
+      localStorage.setItem('ngm_balance', totalBalance);
+
+      wdList.unshift({
+        net,
+        addr: addr.substring(0, 6) + "..." + addr.slice(-4),
+        amt,
+        date: new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}),
+        status: "Pending ⏳"
+      });
+      localStorage.setItem('ngm_withdrawals', JSON.stringify(wdList));
+
+      document.getElementById('wd-amount').value = "";
+      applyUI();
+      showToast("✅ تم إرسال طلب السحب للمراجعة");
+    }
+
+    function renderWithdrawHistory() {
+      const box = document.getElementById('wd-history');
+      if (wdList.length === 0) return;
+      box.innerHTML = wdList.map(w => `
+        <div class="item-row" style="padding:10px; margin-bottom:6px;">
+          <div style="text-align:left;">
+            <strong style="color:#fff;">${w.amt} ${config.coinSym} (${w.net})</strong>
+            <div style="font-size:11px;">${w.addr} · ${w.date}</div>
+          </div>
+          <span class="badge" style="color:#facc15;">${w.status}</span>
+        </div>
+      `).join('');
+    }
+
+    // التنقل بين الصفحات
+    function switchTab(pageId, navEl) {
+      document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+      document.getElementById('page-' + pageId).classList.add('active');
+      if (navEl) {
+        document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+        navEl.classList.add('active');
+      }
+    }
+
+    // فتح لوحة تحكم الأدمن بالرقم السري
+    function openAdminAuth() {
+      const pin = prompt("🔒 أدخل الرقم السري لصاحب البوت (الافتراضي 1234):");
+      if (pin === config.adminPin) {
+        document.getElementById('adm-name').value = config.appName;
+        document.getElementById('adm-sym').value = config.coinSym;
+        document.getElementById('adm-hour').value = config.perHour;
+        document.getElementById('adm-boost').value = config.boost;
+        document.getElementById('adm-ref').value = config.refReward;
+        document.getElementById('adm-minwd').value = config.minWithdraw;
+        document.getElementById('adm-botuser').value = config.botUsername;
+        document.getElementById('adm-pin').value = config.adminPin;
+        document.getElementById('adm-balance').value = totalBalance.toFixed(2);
+        switchTab('admin', null);
+      } else if (pin !== null) {
+        showToast("❌ الرقم السري غير صحيح!", "#ef4444");
+      }
+    }
+
+    // حفظ إعدادات الأدمن
+    function saveAdminSettings() {
+      config.appName = document.getElementById('adm-name').value || "NGM Cloud";
+      config.coinSym = (document.getElementById('adm-sym').value || "NGM").toUpperCase();
+      config.perHour = parseFloat(document.getElementById('adm-hour').value) || 10;
+      config.boost = parseFloat(document.getElementById('adm-boost').value) || 1.0;
+      config.refReward = parseInt(document.getElementById('adm-ref').value) || 500;
+      config.minWithdraw = parseInt(document.getElementById('adm-minwd').value) || 5000;
+      config.botUsername = document.getElementById('adm-botuser').value || "bot";
+      config.adminPin = document.getElementById('adm-pin').value || "1234";
+      
+      const newBal = parseFloat(document.getElementById('adm-balance').value);
+      if (!isNaN(newBal)) {
+        totalBalance = newBal;
+        localStorage.setItem('ngm_balance', totalBalance);
+      }
+
+      localStorage.setItem('bot_config', JSON.stringify(config));
+      applyUI();
+      showToast("✅ تم حفظ إعدادات البوت بنجاح!");
+      switchTab('mining', document.querySelectorAll('.nav-item')[0]);
+    }
+
+    function resetAllData() {
+      if (confirm("هل أنت متأكد من تصفير الرصيد وإعادة الإعدادات الافتراضية؟")) {
+        localStorage.clear();
+        location.reload();
+      }
+    }
+
+    applyUI();
     setInterval(updateMining, 100);
     updateMining();
   </script>
