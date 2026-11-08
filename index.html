@@ -1,0 +1,182 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>Cloud Mining Mini App</title>
+  <script src="https://telegram.org/js/telegram-web-app.js"></script>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; user-select: none; }
+    body { background: radial-gradient(circle at top, #10192b, #070a12 70%); color: #fff; min-height: 100vh; padding: 16px 16px 90px; }
+    
+    /* Header */
+    .header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 20px; }
+    .logo-box { display: flex; align-items: center; gap: 10px; }
+    .logo-circle { width: 48px; height: 48px; border-radius: 50%; background: #1a2639; border: 2px solid #2e4365; display: flex; align-items: center; justify-content: center; font-weight: bold; color: #38bdf8; }
+    .title h2 { font-size: 16px; font-weight: 700; }
+    .title p { font-size: 11px; color: #64748b; letter-spacing: 1px; }
+    .badge { background: #131c2e; border: 1px solid #26354d; padding: 6px 12px; border-radius: 20px; font-size: 12px; color: #cbd5e1; }
+
+    /* Cards */
+    .card { background: rgba(19, 28, 46, 0.85); border: 1px solid #1e293b; border-radius: 20px; padding: 18px; margin-bottom: 14px; box-shadow: 0 8px 25px rgba(0,0,0,0.4); }
+    .card-header { display: flex; justify-content: space-between; font-size: 12px; color: #64748b; margin-bottom: 10px; }
+    .balance-val { font-size: 32px; font-weight: 800; letter-spacing: 0.5px; }
+    .balance-val span { font-size: 16px; color: #94a3b8; font-weight: 500; }
+
+    /* Active Mining */
+    .status-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; }
+    .running { font-size: 12px; color: #0ea5e9; display: flex; align-items: center; gap: 6px; margin-top: 2px; }
+    .dot { width: 8px; height: 8px; background: #0ea5e9; border-radius: 50%; box-shadow: 0 0 8px #0ea5e9; }
+    .mined-now { font-size: 30px; font-weight: 800; color: #38bdf8; margin: 12px 0; }
+    .mined-now span { font-size: 16px; color: #64748b; font-weight: 500; }
+    
+    /* Progress Bar */
+    .prog-text { display: flex; justify-content: space-between; font-size: 12px; color: #64748b; margin-bottom: 8px; }
+    .prog-bg { width: 100%; height: 7px; background: #0f172a; border-radius: 10px; overflow: hidden; }
+    .prog-fill { width: 43%; height: 100%; background: linear-gradient(90deg, #eab308, #38bdf8, #6366f1); border-radius: 10px; }
+
+    /* 3 Stats Grid */
+    .stats-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-bottom: 16px; }
+    .stat-box { background: rgba(19, 28, 46, 0.85); border: 1px solid #1e293b; border-radius: 18px; padding: 14px 10px; text-align: center; }
+    .stat-label { font-size: 11px; color: #64748b; margin-bottom: 8px; }
+    .stat-num { font-size: 18px; font-weight: 700; color: #fff; margin-bottom: 4px; }
+    .stat-sub { font-size: 11px; color: #475569; }
+
+    /* Claim Button */
+    .claim-btn { width: 100%; padding: 16px; border-radius: 25px; border: 1px solid #2dd4bf; background: linear-gradient(180deg, #115e59, #0f3d3e); color: #fff; font-size: 16px; font-weight: 700; cursor: pointer; transition: 0.2s; margin-bottom: 16px; box-shadow: 0 4px 15px rgba(20, 184, 166, 0.25); }
+    .claim-btn:active { transform: scale(0.97); }
+
+    /* Bottom Nav */
+    .bottom-nav { position: fixed; bottom: 0; left: 0; right: 0; height: 70px; background: #0b111e; border-top: 1px solid #1e293b; display: flex; justify-content: space-around; align-items: center; padding: 0 10px; }
+    .nav-item { text-align: center; color: #64748b; font-size: 11px; cursor: pointer; flex: 1; }
+    .nav-item.active { color: #38bdf8; }
+    .nav-icon { font-size: 18px; display: block; margin-bottom: 4px; }
+    .center-fab { width: 56px; height: 56px; border-radius: 50%; background: linear-gradient(135deg, #38bdf8, #818cf8); display: flex; align-items: center; justify-content: center; margin-top: -28px; border: 4px solid #070a12; color: #070a12; font-size: 22px; font-weight: bold; }
+  </style>
+</head>
+<body>
+
+  <!-- Header -->
+  <div class="header">
+    <div class="logo-box">
+      <div class="logo-circle">NGM</div>
+      <div class="title">
+        <h2>NGM Cloud</h2>
+        <p>CLOUD MINING</p>
+      </div>
+    </div>
+    <div class="badge" id="user-badge">EN</div>
+  </div>
+
+  <!-- Balance Card -->
+  <div class="card">
+    <div class="card-header">
+      <span>🔗 In-app balance</span>
+      <span>In game · Does not affect level</span>
+    </div>
+    <div class="balance-val"><span id="total-balance" style="font-size:32px;color:#fff;font-weight:800;">6601.57046</span> <span>NGM</span></div>
+  </div>
+
+  <!-- Active Mining Card -->
+  <div class="card">
+    <div class="status-row">
+      <div>
+        <div style="font-size: 15px; font-weight: 600;">⛏️ Active mining</div>
+        <div class="running"><span class="dot"></span> Running</div>
+      </div>
+      <div class="badge">Epochs ?</div>
+    </div>
+    <div class="mined-now">+<span id="mined-counter" style="font-size:30px;color:#38bdf8;font-weight:800;">2.97445</span> <span>NGM</span></div>
+    <div class="prog-text">
+      <span>To level 4: +650 NGM to wallet</span>
+      <span id="prog-pct">43%</span>
+    </div>
+    <div class="prog-bg"><div class="prog-fill" id="prog-bar"></div></div>
+  </div>
+
+  <!-- Stats Grid -->
+  <div class="stats-grid">
+    <div class="stat-box">
+      <div class="stat-label">⚡ Per hour</div>
+      <div class="stat-num" id="rate-hour">24.9</div>
+      <div class="stat-sub">NGM</div>
+    </div>
+    <div class="stat-box">
+      <div class="stat-label">📅 Per day</div>
+      <div class="stat-num">~597</div>
+      <div class="stat-sub">NGM</div>
+    </div>
+    <div class="stat-box">
+      <div class="stat-label">🚀 Boost</div>
+      <div class="stat-num">×1.4</div>
+      <div class="stat-sub">multiplier</div>
+    </div>
+  </div>
+
+  <!-- Claim Button -->
+  <button class="claim-btn" onclick="claimMined()">⚡ Claim mined</button>
+
+  <!-- League Card -->
+  <div class="card" style="text-align: center; padding: 14px;">
+    <span style="font-size: 15px; font-weight: 600;">Bronze league</span>
+    <span class="badge" style="margin-left: 8px; color: #38bdf8;">Lvl 3</span>
+  </div>
+
+  <!-- Bottom Navigation -->
+  <div class="bottom-nav">
+    <div class="nav-item active"><span class="nav-icon">⛏️</span>Mining</div>
+    <div class="nav-item"><span class="nav-icon">🏪</span>Exchange</div>
+    <div class="center-fab">🥞</div>
+    <div class="nav-item"><span class="nav-icon">👤</span>Friends</div>
+    <div class="nav-item"><span class="nav-icon">👛</span>Withdraw</div>
+  </div>
+
+  <script>
+    const tg = window.Telegram.WebApp;
+    tg.expand();
+
+    // عرض اسم المستخدم من تليجرام إن وجد
+    if (tg.initDataUnsafe?.user?.first_name) {
+      document.getElementById('user-badge').innerText = tg.initDataUnsafe.user.first_name;
+    }
+
+    // إعدادات التعدين والرصيد (تحفظ محلياً للتجربة)
+    let totalBalance = parseFloat(localStorage.getItem('ngm_balance')) || 6601.57046;
+    let lastClaim = parseInt(localStorage.getItem('ngm_last_claim')) || (Date.now() - 430000);
+    const perHour = 24.9;
+    const boost = 1.4;
+    const ratePerSecond = (perHour * boost) / 3600; // السرعة في الثانية الواحدة
+
+    const balanceEl = document.getElementById('total-balance');
+    const minedEl = document.getElementById('mined-counter');
+
+    function updateMining() {
+      const now = Date.now();
+      const elapsedSeconds = (now - lastClaim) / 1000;
+      const currentMined = elapsedSeconds * ratePerSecond;
+      
+      minedEl.innerText = currentMined.toFixed(5);
+      balanceEl.innerText = totalBalance.toFixed(5);
+    }
+
+    function claimMined() {
+      const now = Date.now();
+      const elapsedSeconds = (now - lastClaim) / 1000;
+      const currentMined = elapsedSeconds * ratePerSecond;
+
+      totalBalance += currentMined;
+      lastClaim = now;
+
+      localStorage.setItem('ngm_balance', totalBalance);
+      localStorage.setItem('ngm_last_claim', lastClaim);
+
+      updateMining();
+      if (tg.HapticFeedback) tg.HapticFeedback.impactOccurred('medium');
+    }
+
+    // تحديث العداد كل 100 مللي ثانية ليظهر متحركاً بسرعة
+    setInterval(updateMining, 100);
+    updateMining();
+  </script>
+</body>
+</html>
