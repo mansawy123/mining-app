@@ -3,208 +3,394 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <title>$VIKING MINER</title>
+  <title>$VIKING 3D MINER</title>
   <script src="https://telegram.org/js/telegram-web-app.js"></script>
   <script src="https://unpkg.com/@tonconnect/ui@latest/dist/tonconnect-ui.min.js"></script>
   <style>
     :root {
       --gold: #f59e0b;
-      --gold-light: #fbbf24;
-      --fire: #ea580c;
-      --bg-dark: #07090e;
-      --card-bg: rgba(16, 20, 29, 0.92);
-      --border-gold: rgba(245, 158, 11, 0.35);
+      --gold-bright: #fde047;
+      --gold-dark: #92400e;
+      --bronze: #78350f;
+      --bg-deep: #06080d;
+      --card-top: #161d2a;
+      --card-bottom: #0c1017;
       --text-muted: #94a3b8;
     }
 
     * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; user-select: none; -webkit-tap-highlight-color: transparent; }
     body {
-      background: radial-gradient(circle at 50% 0%, #291507 0%, #0b0e14 45%, #05070a 100%);
+      background: radial-gradient(circle at 50% -10%, #3b1d06 0%, #0d121c 45%, #05070b 100%);
       color: #fff;
       min-height: 100vh;
-      padding: 12px 14px 96px;
+      padding: 12px 14px 105px;
       overflow-x: hidden;
+      perspective: 1000px;
     }
 
-    /* Top Bar ($DOGG style adapted to Viking) */
-    .top-bar { display: flex; align-items: center; justify-content: space-between; padding: 8px 4px 14px; border-bottom: 1px solid rgba(245, 158, 11, 0.15); margin-bottom: 14px; }
-    .icon-btn { width: 38px; height: 38px; border-radius: 12px; background: rgba(245, 158, 11, 0.1); border: 1px solid var(--border-gold); color: var(--gold-light); display: flex; align-items: center; justify-content: center; font-size: 16px; cursor: pointer; }
-    .brand-logo { font-size: 20px; font-weight: 900; letter-spacing: 1.5px; background: linear-gradient(90deg, #fde047, #f59e0b, #ea580c); -webkit-background-clip: text; -webkit-text-fill-color: transparent; text-shadow: 0 0 20px rgba(245, 158, 11, 0.3); font-style: italic; }
-    .top-right { display: flex; gap: 8px; align-items: center; }
+    /*Banned Screen Overlay*/
+    #banned-overlay {
+      position: fixed; inset: 0; background: radial-gradient(circle, #450a0a, #090505 80%);
+      z-index: 99999; display: none; flex-direction: column; align-items: center; justify-content: center;
+      padding: 24px; text-align: center; direction: rtl;
+    }
+
+    /* 3D Top Bar */
+    .top-bar {
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 10px 14px; margin-bottom: 16px;
+      background: linear-gradient(180deg, #1b2434, #0e131d);
+      border-radius: 20px;
+      border-top: 1px solid rgba(253, 224, 71, 0.35);
+      border-bottom: 4px solid #06080c;
+      box-shadow: 0 8px 20px rgba(0,0,0,0.7);
+    }
+    .icon-btn-3d {
+      width: 38px; height: 38px; border-radius: 12px;
+      background: linear-gradient(180deg, #273247, #131926);
+      border-top: 1px solid rgba(255,255,255,0.2);
+      border-bottom: 3px solid #070a10;
+      color: var(--gold-bright); display: flex; align-items: center; justify-content: center;
+      font-size: 15px; font-weight: 800; cursor: pointer;
+      box-shadow: 0 4px 10px rgba(0,0,0,0.5);
+      transition: transform 0.1s;
+    }
+    .icon-btn-3d:active { transform: translateY(2px); border-bottom-width: 1px; }
+
+    .brand-logo {
+      font-size: 20px; font-weight: 900; letter-spacing: 1.5px;
+      background: linear-gradient(180deg, #fff 0%, #fde047 45%, #d97706 100%);
+      -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+      filter: drop-shadow(0 3px 0px #451a03) drop-shadow(0 6px 12px rgba(245,158,11,0.4));
+      font-style: italic; cursor: pointer;
+    }
 
     /* Pages */
-    .page { display: none; animation: fadeIn 0.22s ease-out; }
+    .page { display: none; animation: pop3d 0.25s ease-out; }
     .page.active { display: block; }
-    @keyframes fadeIn { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: translateY(0); } }
+    @keyframes pop3d { from { opacity: 0; transform: translateY(8px) scale(0.98); } to { opacity: 1; transform: translateY(0) scale(1); } }
 
-    /* Hero Banner */
-    .hero-banner { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; padding: 4px 4px; }
-    .hero-title h1 { font-size: 28px; font-weight: 900; letter-spacing: 1px; color: #fff; text-transform: uppercase; text-shadow: 0 2px 10px rgba(0,0,0,0.8); }
-    .hero-title p { font-size: 13px; color: #cbd5e1; margin-top: 4px; }
-    .hero-title p span { color: var(--gold-light); font-weight: 800; }
-    .viking-avatar-art { width: 84px; height: 84px; border-radius: 20px; background: radial-gradient(circle, #451a03, #0f172a); border: 2px solid var(--gold); display: flex; align-items: center; justify-content: center; font-size: 46px; box-shadow: 0 0 25px rgba(245, 158, 11, 0.35); }
+    /* 3D Cards */
+    .card-3d {
+      background: linear-gradient(180deg, var(--card-top) 0%, var(--card-bottom) 100%);
+      border-radius: 22px; padding: 16px; margin-bottom: 16px;
+      border-top: 1.5px solid rgba(251, 191, 36, 0.4);
+      border-left: 1px solid rgba(251, 191, 36, 0.15);
+      border-right: 1px solid rgba(251, 191, 36, 0.15);
+      border-bottom: 6px solid #06090f;
+      box-shadow: 0 12px 24px rgba(0, 0, 0, 0.75), inset 0 1px 0 rgba(255, 255, 255, 0.1);
+      position: relative;
+    }
 
-    /* Cards */
-    .card { background: var(--card-bg); border: 1px solid var(--border-gold); border-radius: 20px; padding: 16px; margin-bottom: 14px; box-shadow: 0 8px 25px rgba(0,0,0,0.6); backdrop-filter: blur(10px); }
-    .sub-box { background: rgba(0,0,0,0.45); border: 1px solid rgba(255,255,255,0.08); border-radius: 14px; padding: 10px; }
+    .sub-box-3d {
+      background: linear-gradient(180deg, #0b0f17, #121824);
+      border-radius: 16px; padding: 11px;
+      border-top: 2px solid #05070b;
+      border-bottom: 1px solid rgba(255,255,255,0.08);
+      box-shadow: inset 0 4px 8px rgba(0,0,0,0.7);
+    }
 
-    /* Mine Page Center Emblem */
-    .claimed-center { text-align: center; margin: 14px 0; }
-    .claimed-num { font-size: 24px; font-weight: 900; color: #fff; letter-spacing: 0.5px; }
-    .claimed-pill { display: inline-block; background: linear-gradient(90deg, #b45309, #d97706); color: #fff; font-size: 11px; font-weight: 800; padding: 4px 14px; border-radius: 20px; margin-top: 6px; }
+    /* Hero Banner 3D */
+    .hero-banner { display: flex; justify-content: space-between; align-items: center; margin-bottom: 14px; padding: 2px 4px; }
+    .hero-title h1 {
+      font-size: 28px; font-weight: 900; letter-spacing: 1px; color: #fff; text-transform: uppercase;
+      text-shadow: 0 3px 0 #451a03, 0 6px 15px rgba(0,0,0,0.9);
+    }
+    .hero-title p { font-size: 12.5px; color: #cbd5e1; margin-top: 4px; }
+    .hero-title p span { color: var(--gold-bright); font-weight: 800; }
+    .viking-3d-avatar {
+      width: 82px; height: 82px; border-radius: 22px;
+      background: radial-gradient(circle at 30% 30%, #78350f, #111827);
+      border-top: 2px solid var(--gold-bright);
+      border-bottom: 5px solid #451a03;
+      display: flex; align-items: center; justify-content: center; font-size: 44px;
+      box-shadow: 0 10px 20px rgba(0,0,0,0.8), 0 0 20px rgba(245, 158, 11, 0.3);
+      transform: rotateY(-8deg) rotateX(5deg);
+    }
 
-    .shield-wrapper { position: relative; width: 175px; height: 175px; margin: 14px auto; display: flex; align-items: center; justify-content: center; }
-    .shield-glow { position: absolute; inset: -10px; border-radius: 50%; background: radial-gradient(circle, rgba(245,158,11,0.4), transparent 70%); animation: pulseGlow 2.5s infinite ease-in-out; }
-    .viking-shield { position: relative; width: 156px; height: 156px; border-radius: 50%; background: radial-gradient(circle, #78350f 0%, #451a03 60%, #1c1917 100%); border: 5px solid var(--gold-light); box-shadow: 0 0 30px rgba(245, 158, 11, 0.5), inset 0 0 20px #000; display: flex; flex-direction: column; align-items: center; justify-content: center; cursor: pointer; transition: transform 0.1s; }
-    .viking-shield:active { transform: scale(0.95); }
-    .shield-icon { font-size: 58px; filter: drop-shadow(0 4px 8px rgba(0,0,0,0.7)); }
-    .shield-runes { font-size: 10px; letter-spacing: 3px; color: var(--gold-light); margin-top: 4px; opacity: 0.85; font-weight: 700; }
-    @keyframes pulseGlow { 0%, 100% { transform: scale(1); opacity: 0.7; } 50% { transform: scale(1.08); opacity: 1; } }
+    /* 3D Interactive Viking Shield Coin */
+    .shield-scene {
+      width: 190px; height: 190px; margin: 16px auto;
+      perspective: 800px; display: flex; align-items: center; justify-content: center;
+    }
+    .shield-3d-object {
+      width: 168px; height: 168px; border-radius: 50%;
+      position: relative; transform-style: preserve-3d;
+      transition: transform 0.15s ease-out; cursor: pointer;
+      animation: float3d 3.5s ease-in-out infinite;
+    }
+    @keyframes float3d {
+      0%, 100% { transform: translateY(0px) rotateX(6deg) rotateY(-6deg); }
+      50% { transform: translateY(-8px) rotateX(-6deg) rotateY(6deg); }
+    }
+    .shield-base {
+      position: absolute; inset: 0; border-radius: 50%;
+      background: radial-gradient(circle at 35% 30%, #fbbf24 0%, #b45309 55%, #451a03 90%, #1c1917 100%);
+      border: 6px solid #fde047;
+      box-shadow:
+        0 12px 0 #78350f,
+        0 16px 0 #291002,
+        0 25px 35px rgba(0,0,0,0.9),
+        0 0 40px rgba(245, 158, 11, 0.45),
+        inset 0 4px 12px rgba(255,255,255,0.6),
+        inset 0 -8px 16px rgba(0,0,0,0.8);
+      display: flex; flex-direction: column; align-items: center; justify-content: center;
+    }
+    .shield-inner-ring {
+      width: 126px; height: 126px; border-radius: 50%;
+      background: radial-gradient(circle at 40% 35%, #451a03, #090d16 85%);
+      border: 3px dashed rgba(253, 224, 71, 0.6);
+      box-shadow: inset 0 6px 15px rgba(0,0,0,0.9), 0 2px 5px rgba(255,255,255,0.2);
+      display: flex; flex-direction: column; align-items: center; justify-content: center;
+      transform: translateZ(15px);
+    }
+    .shield-emblem { font-size: 56px; filter: drop-shadow(0 6px 6px rgba(0,0,0,0.9)); transform: translateZ(25px); }
+    .shield-runes { font-size: 10px; letter-spacing: 3px; color: var(--gold-bright); font-weight: 900; margin-top: 4px; text-shadow: 0 2px 4px #000; }
 
-    .live-counter { text-align: center; font-size: 32px; font-weight: 900; color: var(--gold-light); text-shadow: 0 0 18px rgba(245, 158, 11, 0.45); margin-bottom: 12px; font-variant-numeric: tabular-nums; }
+    /* Live Counter 3D Text */
+    .live-counter {
+      text-align: center; font-size: 32px; font-weight: 900;
+      color: var(--gold-bright);
+      text-shadow: 0 3px 0 #78350f, 0 6px 20px rgba(245, 158, 11, 0.6);
+      margin: 14px 0 10px; font-variant-numeric: tabular-nums;
+    }
 
-    /* Progress Bar */
+    /* 3D Progress Bar */
     .prog-row { display: flex; justify-content: space-between; font-size: 11.5px; color: var(--text-muted); margin-bottom: 6px; }
-    .prog-row strong { color: var(--gold-light); }
-    .prog-bg { width: 100%; height: 9px; background: #111827; border-radius: 10px; overflow: hidden; margin-bottom: 14px; border: 1px solid rgba(245,158,11,0.2); }
-    .prog-fill { height: 100%; width: 25%; background: linear-gradient(90deg, #ea580c, #f59e0b, #fde047); border-radius: 10px; transition: width 0.3s; }
+    .prog-row strong { color: var(--gold-bright); }
+    .prog-bg-3d {
+      width: 100%; height: 12px; background: #080b11; border-radius: 12px;
+      overflow: hidden; margin-bottom: 16px;
+      border-top: 2px solid #030508; border-bottom: 1px solid rgba(255,255,255,0.1);
+      box-shadow: inset 0 3px 6px rgba(0,0,0,0.9);
+    }
+    .prog-fill-3d {
+      height: 100%; width: 20%;
+      background: linear-gradient(180deg, #fde047 0%, #f59e0b 50%, #b45309 100%);
+      border-radius: 10px; box-shadow: 0 0 12px var(--gold); transition: width 0.3s;
+    }
 
-    /* Grids & Pills */
-    .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 12px; }
-    .grid-3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-bottom: 12px; }
-    .pill-stat { background: rgba(15, 23, 42, 0.9); border: 1px solid rgba(255,255,255,0.1); border-radius: 22px; padding: 10px 14px; display: flex; align-items: center; justify-content: center; gap: 8px; font-size: 13px; font-weight: 700; }
+    /* 3D Push Buttons */
+    .btn-3d-gold {
+      width: 100%; padding: 15px 18px; border-radius: 18px; border: none;
+      background: linear-gradient(180deg, #fde047 0%, #f59e0b 45%, #d97706 100%);
+      color: #1c1002; font-size: 15px; font-weight: 900; cursor: pointer;
+      display: flex; align-items: center; justify-content: center; gap: 8px;
+      border-top: 1.5px solid #fef08a;
+      border-bottom: 5px solid #78350f;
+      box-shadow: 0 8px 18px rgba(245, 158, 11, 0.35), 0 4px 0 #451a03;
+      margin-bottom: 14px; text-transform: uppercase; letter-spacing: 0.5px;
+      transition: all 0.08s ease;
+    }
+    .btn-3d-gold:active {
+      transform: translateY(4px);
+      border-bottom-width: 1px;
+      box-shadow: 0 2px 8px rgba(245, 158, 11, 0.25);
+    }
 
-    /* Buttons */
-    .btn-gold { width: 100%; padding: 15px 18px; border-radius: 18px; border: none; background: linear-gradient(90deg, #f59e0b, #fbbf24, #d97706); color: #090d16; font-size: 15px; font-weight: 900; cursor: pointer; display: flex; align-items: center; justify-content: space-between; box-shadow: 0 6px 20px rgba(245, 158, 11, 0.35); margin-bottom: 12px; text-transform: uppercase; letter-spacing: 0.5px; }
-    .btn-gold:active { transform: scale(0.98); }
-    .btn-GoldCenter { justify-content: center; gap: 8px; }
-    .btn-bronze { width: 100%; padding: 13px; border-radius: 16px; border: 1px solid var(--border-gold); background: linear-gradient(180deg, #9a3412, #7c2d12); color: #fde047; font-size: 14px; font-weight: 800; cursor: pointer; text-align: center; }
-    .btn-dark { width: 100%; padding: 12px; border-radius: 14px; border: 1px solid rgba(255,255,255,0.12); background: #111827; color: #94a3b8; font-size: 13px; font-weight: 700; cursor: pointer; text-align: center; }
+    .btn-3d-bronze {
+      width: 100%; padding: 13px; border-radius: 16px;
+      background: linear-gradient(180deg, #9a3412 0%, #7c2d12 100%);
+      border-top: 1px solid #fdba74;
+      border-bottom: 4px solid #431407;
+      color: #fde047; font-size: 13.5px; font-weight: 800; cursor: pointer; text-align: center;
+      box-shadow: 0 6px 14px rgba(0,0,0,0.6); transition: all 0.08s;
+    }
+    .btn-3d-bronze:active { transform: translateY(3px); border-bottom-width: 1px; }
 
-    /* Boost Level Cards Grid (1 to 100) */
-    .tier-tabs { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-bottom: 14px; }
-    .tier-tab { background: var(--card-bg); border: 1px solid rgba(255,255,255,0.12); border-radius: 14px; padding: 10px 8px; text-align: left; cursor: pointer; }
-    .tier-tab.active { border-color: var(--gold); background: rgba(245, 158, 11, 0.12); }
-    .tier-tab small { display: block; font-size: 9.5px; color: var(--text-muted); margin-bottom: 3px; }
-    .tier-tab strong { font-size: 12px; color: #fff; }
-    .tier-tab.active strong { color: var(--gold-light); }
+    .btn-3d-dark {
+      width: 100%; padding: 11px; border-radius: 14px;
+      background: linear-gradient(180deg, #1e293b, #0f172a);
+      border-top: 1px solid rgba(255,255,255,0.15);
+      border-bottom: 4px solid #06090f;
+      color: #cbd5e1; font-size: 12.5px; font-weight: 700; cursor: pointer; text-align: center;
+      transition: all 0.08s;
+    }
+    .btn-3d-dark:active { transform: translateY(3px); border-bottom-width: 1px; }
 
-    .miner-card { background: var(--card-bg); border: 1px solid var(--border-gold); border-radius: 18px; padding: 12px; display: flex; flex-direction: column; justify-content: space-between; }
-    .miner-art { width: 100%; height: 95px; border-radius: 12px; background: radial-gradient(circle, #3b1806, #090d16); border: 1px solid rgba(245,158,11,0.2); display: flex; flex-direction: column; align-items: center; justify-content: center; margin-bottom: 10px; position: relative; }
-    .miner-art.locked { filter: grayscale(0.85); opacity: 0.7; }
-    .miner-status-icon { position: absolute; top: 6px; right: 8px; font-size: 12px; }
+    /* Grids */
+    .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 14px; }
+    .grid-3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-bottom: 14px; }
 
-    /* Inputs & Modals */
-    .input-box { width: 100%; padding: 13px 14px; border-radius: 14px; border: 1px solid var(--border-gold); background: #090c12; color: #fff; font-size: 14px; outline: none; margin-bottom: 10px; }
-    .section-divider { display: flex; justify-content: space-between; align-items: center; margin: 18px 0 10px; padding-bottom: 6px; border-bottom: 2px dashed rgba(245, 158, 11, 0.3); }
-    .section-divider h3 { font-size: 16px; font-weight: 900; font-style: italic; letter-spacing: 0.8px; }
-    .section-divider span { font-size: 10px; color: var(--text-muted); text-transform: uppercase; }
+    /* Boost Level Cards 3D */
+    .miner-card-3d {
+      background: linear-gradient(180deg, #172030, #0c1018);
+      border-top: 1px solid rgba(251,191,36,0.35);
+      border-bottom: 5px solid #05070b;
+      border-radius: 18px; padding: 12px;
+      box-shadow: 0 8px 18px rgba(0,0,0,0.7);
+      display: flex; flex-direction: column; justify-content: space-between;
+    }
+    .miner-art-3d {
+      width: 100%; height: 90px; border-radius: 14px;
+      background: radial-gradient(circle, #451a03, #090d16);
+      border-top: 2px solid #05070b; border-bottom: 1px solid rgba(251,191,36,0.25);
+      display: flex; flex-direction: column; align-items: center; justify-content: center;
+      margin-bottom: 10px; position: relative; box-shadow: inset 0 4px 10px rgba(0,0,0,0.8);
+    }
 
-    /* Bottom Navigation (5 Tabs like $DOGG) */
-    .bottom-nav { position: fixed; bottom: 10px; left: 12px; right: 12px; height: 70px; background: rgba(11, 14, 21, 0.96); border: 1.5px solid var(--border-gold); border-radius: 24px; display: flex; justify-content: space-around; align-items: center; padding: 0 6px; z-index: 100; box-shadow: 0 10px 30px rgba(0,0,0,0.85); backdrop-filter: blur(12px); }
-    .nav-item { flex: 1; text-align: center; color: #64748b; font-size: 10.5px; font-weight: 600; cursor: pointer; padding: 6px 0; border-radius: 16px; transition: 0.2s; }
-    .nav-item.active { color: var(--gold-light); background: rgba(245, 158, 11, 0.14); border: 1px solid rgba(245, 158, 11, 0.4); }
-    .nav-icon { font-size: 19px; display: block; margin-bottom: 2px; }
+    /* Inputs */
+    .input-3d {
+      width: 100%; padding: 13px 14px; border-radius: 14px;
+      border-top: 2px solid #040609; border-bottom: 1px solid rgba(251, 191, 36, 0.35);
+      border-left: 1px solid rgba(255,255,255,0.08); border-right: 1px solid rgba(255,255,255,0.08);
+      background: #080b12; color: #fff; font-size: 14px; outline: none; margin-bottom: 10px;
+      box-shadow: inset 0 4px 8px rgba(0,0,0,0.8);
+    }
 
-    /* Admin RTL */
+    /* 3D Bottom Navigation */
+    .bottom-nav-3d {
+      position: fixed; bottom: 10px; left: 12px; right: 12px; height: 74px;
+      background: linear-gradient(180deg, #192231 0%, #0b0f17 100%);
+      border-top: 1.5px solid rgba(251, 191, 36, 0.4);
+      border-bottom: 5px solid #04060a;
+      border-radius: 24px; display: flex; justify-content: space-around; align-items: center;
+      padding: 0 6px; z-index: 100;
+      box-shadow: 0 12px 30px rgba(0,0,0,0.9);
+    }
+    .nav-item {
+      flex: 1; text-align: center; color: #64748b; font-size: 10.5px; font-weight: 700;
+      cursor: pointer; padding: 7px 0; border-radius: 16px; transition: all 0.15s;
+    }
+    .nav-item.active {
+      color: #1c1002;
+      background: linear-gradient(180deg, #fde047, #f59e0b);
+      border-bottom: 3px solid #78350f;
+      box-shadow: 0 4px 12px rgba(245, 158, 11, 0.4);
+      transform: translateY(-4px);
+    }
+    .nav-icon { font-size: 18px; display: block; margin-bottom: 2px; }
+
+    /* Owner Secret Floating Button (Only visible if Owner ID matches) */
+    #owner-secret-badge {
+      position: fixed; bottom: 92px; left: 14px; z-index: 200;
+      background: linear-gradient(180deg, #dc2626, #991b1b);
+      border-top: 1px solid #fca5a5; border-bottom: 3px solid #450a0a;
+      color: #fff; padding: 7px 12px; border-radius: 20px; font-size: 11px; font-weight: 800;
+      box-shadow: 0 6px 15px rgba(0,0,0,0.8); cursor: pointer; display: none;
+    }
+
+    /* Admin Panel Specific Styles (RTL) */
     .admin-wrap { direction: rtl; text-align: right; }
-    .admin-wrap label { display: block; font-size: 11.5px; color: #cbd5e1; margin-bottom: 4px; }
+    .admin-wrap label { display: block; font-size: 11.5px; color: #cbd5e1; margin-bottom: 4px; font-weight: 600; }
+    .user-row-card {
+      background: rgba(9, 13, 22, 0.9); border: 1px solid rgba(255,255,255,0.1);
+      border-right: 4px solid var(--gold); border-radius: 16px; padding: 12px; margin-bottom: 10px;
+    }
+    .user-row-card.suspicious { border-right-color: #f59e0b; background: rgba(69, 26, 3, 0.35); }
+    .user-row-card.banned { border-right-color: #ef4444; opacity: 0.75; background: rgba(69, 10, 10, 0.4); }
+    .tag-badge { display: inline-block; padding: 2px 8px; border-radius: 8px; font-size: 10px; font-weight: 800; }
 
-    #toast { position: fixed; top: 14px; left: 50%; transform: translateX(-50%); background: #d97706; color: #fff; padding: 10px 20px; border-radius: 20px; font-size: 12.5px; font-weight: 800; display: none; z-index: 9999; box-shadow: 0 6px 20px rgba(0,0,0,0.7); text-align: center; min-width: 250px; border: 1px solid #fde047; }
+    #toast {
+      position: fixed; top: 14px; left: 50%; transform: translateX(-50%);
+      background: linear-gradient(180deg, #f59e0b, #b45309); color: #fff;
+      padding: 10px 20px; border-radius: 20px; font-size: 12.5px; font-weight: 800;
+      display: none; z-index: 99999; box-shadow: 0 8px 25px rgba(0,0,0,0.8);
+      text-align: center; min-width: 260px; border-top: 1px solid #fde047; border-bottom: 3px solid #451a03;
+    }
   </style>
 </head>
 <body>
 
   <div id="toast">Notification</div>
 
-  <!-- ================= TOP HEADER ================= -->
+  <!-- ================= BANNED USER SCREEN ================= -->
+  <div id="banned-overlay">
+    <div style="font-size: 64px; margin-bottom: 12px;">🚫</div>
+    <h1 style="color: #ef4444; font-size: 24px; margin-bottom: 10px;">تم حظر حسابك نهائياً!</h1>
+    <p style="color: #fca5a5; font-size: 14px; line-height: 1.6; max-width: 320px; margin-bottom: 20px;">
+      قام نظام الحماية الخاص ببوت <strong>$VIKING MINER</strong> بحظر حسابك بسبب اكتشاف <strong>تعدد حسابات أو إحالات وهمية</strong> من نفس الجهاز/الشبكة.
+    </p>
+    <div class="sub-box-3d" style="color: #94a3b8; font-size: 12px; width: 100%; max-width: 300px;">
+      رقم المعرف المحظور: <span id="banned-uid-txt" style="color:#fff; font-weight:800;"></span>
+    </div>
+    <!-- زر لفك الحظر عن نفسك أثناء التجربة فقط -->
+    <button class="btn-3d-dark" style="max-width:220px; margin-top:25px;" onclick="unbanSelfDemo()">🔓 فك الحظر (خاص بالمالك للتجربة)</button>
+  </div>
+
+  <!-- زر المالك السري (يظهر فقط لحساب صاحب البوت) -->
+  <div id="owner-secret-badge" onclick="openOwnerDashboard()">👑 لوحة المالك</div>
+
+  <!-- ================= 3D TOP HEADER ================= -->
   <div class="top-bar">
-    <div class="icon-btn" onclick="openAdminAuth()" title="لوحة صاحب البوت">⚙️</div>
-    <div class="brand-logo" id="ui-brand-title">$VIKING MINER</div>
-    <div class="top-right">
-      <div class="icon-btn" style="font-size:12px; font-weight:800;">EN</div>
-      <div class="icon-btn" onclick="switchTab('profile', document.querySelectorAll('.nav-item')[4])">👛</div>
+    <div class="icon-btn-3d" onclick="switchTab('boost', document.querySelectorAll('.nav-item')[2])" title="Levels">⚡</div>
+    <!-- اضغط 5 مرات متتالية هنا لفتح لوحة المالك السرية -->
+    <div class="brand-logo" id="ui-brand-title" onclick="secretLogoTap()">$VIKING MINER</div>
+    <div style="display:flex; gap:8px;">
+      <div class="icon-btn-3d" onclick="switchTab('profile', document.querySelectorAll('.nav-item')[4])">👛</div>
     </div>
   </div>
 
-  <!-- ================= 1. MINE TAB ================= -->
+  <!-- ================= 1. MINE TAB (3D) ================= -->
   <div id="page-mine" class="page active">
     <div class="hero-banner">
       <div class="hero-title">
-        <h1>MINE</h1>
+        <h1>MINE 3D</h1>
         <p>Raid the seas and mine <span class="coin-sym">$VIKING</span></p>
       </div>
-      <div class="viking-avatar-art">🧔🏼‍♂️</div>
+      <div class="viking-3d-avatar">🧔🏼‍♂️</div>
     </div>
 
-    <!-- Mining Rate & Current Rank Card -->
-    <div class="card">
+    <div class="card-3d">
       <div class="grid-2" style="margin-bottom:0;">
         <div>
-          <div style="font-size:10.5px; color:var(--text-muted); margin-bottom:4px;">MINING RATE</div>
-          <div style="font-size:20px; font-weight:900;" id="mine-ths">0.200 TH/s</div>
-          <div style="font-size:12px; color:#22c55e; margin-top:4px; font-weight:600;">● Mining</div>
+          <div style="font-size:10px; color:var(--text-muted); margin-bottom:4px;">MINING RATE</div>
+          <div style="font-size:20px; font-weight:900; color:var(--gold-bright);" id="mine-ths">0.200 TH/s</div>
+          <div style="font-size:11.5px; color:#22c55e; margin-top:4px; font-weight:700;">● 3D Rig Active</div>
         </div>
         <div>
-          <div style="font-size:10.5px; color:var(--text-muted); margin-bottom:4px;">CURRENT RANK</div>
+          <div style="font-size:10px; color:var(--text-muted); margin-bottom:4px;">CURRENT RANK</div>
           <div style="font-size:20px; font-weight:900;" id="mine-lvl-txt">Level 1</div>
-          <div style="font-size:12px; color:var(--text-muted); margin-top:4px;" id="mine-rank-title">Shieldbearer 1</div>
+          <div style="font-size:11.5px; color:var(--text-muted); margin-top:4px;" id="mine-rank-title">Shieldbearer 1</div>
         </div>
       </div>
     </div>
 
-    <!-- Claimed in App -->
-    <div class="claimed-center">
-      <div class="claimed-num"><span id="mine-claimed-total">0</span> <span class="coin-sym">$VIKING</span></div>
-      <div class="claimed-pill">Claimed in the app</div>
+    <div style="text-align:center; margin: 10px 0;">
+      <div style="font-size:26px; font-weight:900; text-shadow:0 3px 0 #000;"><span id="mine-claimed-total">0</span> <span class="coin-sym" style="color:var(--gold-bright);">$VIKING</span></div>
+      <span style="background:linear-gradient(180deg,#d97706,#78350f); padding:4px 14px; border-radius:20px; font-size:11px; font-weight:800; border-top:1px solid #fde047; display:inline-block; margin-top:4px;">Claimed in the app</span>
     </div>
 
-    <!-- Center Viking Shield & Live Counter -->
-    <div class="shield-wrapper" onclick="collectMining()">
-      <div class="shield-glow"></div>
-      <div class="viking-shield">
-        <div class="shield-icon">⚔️</div>
-        <div class="shield-runes">ᚡᛁᚴᛁᚾᚷ</div>
+    <!-- 3D Interactive Shield -->
+    <div class="shield-scene">
+      <div class="shield-3d-object" id="viking-3d-shield" onclick="tap3dShield(event)">
+        <div class="shield-base">
+          <div class="shield-inner-ring">
+            <div class="shield-emblem">⚔️</div>
+            <div class="shield-runes">ᚡᛁᚴᛁᚾᚷ</div>
+          </div>
+        </div>
       </div>
     </div>
 
     <div class="live-counter">+<span id="live-mined-num">0.000000</span></div>
 
-    <!-- Level Progress Bar -->
     <div class="prog-row">
       <span id="mine-next-info">Next: level 2 · 5.50 $VIKING/d</span>
       <strong id="mine-to-go">100 $VIKING to go</strong>
     </div>
-    <div class="prog-bg"><div class="prog-fill" id="mine-prog-bar"></div></div>
+    <div class="prog-bg-3d"><div class="prog-fill-3d" id="mine-prog-bar"></div></div>
 
-    <!-- Streak & Watch Ad Turbo -->
     <div class="grid-2">
-      <div class="sub-box" style="border-color:var(--border-gold);">
-        <div style="font-size:12px; font-weight:800;">🔥 1-day streak · x1.00</div>
-        <div style="font-size:10.5px; color:var(--text-muted); margin-top:2px;">2 more day(s) → x1.05</div>
+      <div class="sub-box-3d" style="text-align:center;">
+        <div style="font-size:12px; font-weight:800; color:var(--gold-bright);">⚡ <span id="mine-day-rate">5.00 $VIKING/d</span></div>
+        <div style="font-size:10px; color:var(--text-muted); margin-top:2px;">Daily Speed</div>
       </div>
-      <button class="btn-gold" style="margin-bottom:0; padding:10px 12px; font-size:11.5px; justify-content:center; gap:6px;" onclick="activateTurbo()">
-        ⚡ <span>▶ Watch ad · Turbo x2<br><small>5 min boost</small></span>
-      </button>
+      <div class="sub-box-3d" style="text-align:center;">
+        <div style="font-size:12px; font-weight:800;">🕒 <span id="shift-timer">23 : 59 : 45</span></div>
+        <div style="font-size:10px; color:var(--text-muted); margin-top:2px;">Shift Cycle</div>
+      </div>
     </div>
 
-    <!-- Daily Speed & 24h Timer -->
-    <div class="grid-2">
-      <div class="pill-stat">⚡ <span id="mine-day-rate">5.00 $VIKING/d</span></div>
-      <div class="pill-stat">🕒 <span id="shift-timer">23 : 59 : 45</span></div>
-    </div>
-
-    <!-- Collect Button -->
-    <button class="btn-gold" onclick="collectMining()">
+    <button class="btn-3d-gold" onclick="collectMining()">
       <span>🛡️</span>
-      <span>RAID & COLLECT</span>
+      <span>RAID & COLLECT COINS</span>
       <span>→</span>
     </button>
 
-    <!-- Buy & Price Buttons -->
-    <div class="grid-2">
-      <button class="btn-gold btn-GoldCenter" style="margin-bottom:0;" onclick="openBuyModal()">Buy <span class="coin-sym">$VIKING</span></button>
-      <button class="btn-bronze" onclick="switchTab('boost', document.querySelectorAll('.nav-item')[2])">See Levels (1-100)</button>
+    <div class="grid-2" style="margin-bottom:0;">
+      <button class="btn-3d-gold" style="margin-bottom:0;" onclick="openBuyModal()">🪙 Buy <span class="coin-sym">$VIKING</span></button>
+      <button class="btn-3d-bronze" onclick="activateTurbo()">⚡ Turbo x2 (5m)</button>
     </div>
   </div>
 
@@ -213,966 +399,28 @@
     <div class="hero-banner">
       <div class="hero-title">
         <h1>TASKS</h1>
-        <p>Complete raids and earn more <span class="coin-sym">$VIKING</span></p>
+        <p>Complete quests & earn free <span class="coin-sym">$VIKING</span></p>
       </div>
-      <div class="viking-avatar-art">📜</div>
+      <div class="viking-3d-avatar">📜</div>
     </div>
 
-    <!-- Watch Ads Card -->
-    <div class="card">
+    <div class="card-3d">
       <div style="display:flex; align-items:center; gap:12px; margin-bottom:10px;">
-        <div class="icon-btn" style="width:44px; height:44px; font-size:20px;">📺</div>
+        <div class="icon-btn-3d" style="width:44px; height:44px; font-size:20px;">📺</div>
         <div>
-          <h4 style="font-size:15px;">Watch ads</h4>
-          <p style="font-size:12px; color:var(--gold-light); font-weight:700;">+5 <span class="coin-sym">$VIKING</span> per ad · <span id="ads-watched-txt">0/10</span> today</p>
+          <h4 style="font-size:15px;">Watch Viking Ads</h4>
+          <p style="font-size:12px; color:var(--gold-bright); font-weight:700;">+5 <span class="coin-sym">$VIKING</span> per ad · <span id="ads-watched-txt">0/10</span> today</p>
         </div>
       </div>
-      <div class="prog-bg" style="margin-bottom:8px;"><div class="prog-fill" id="ads-prog-bar" style="width:0%;"></div></div>
-      <p style="font-size:11px; color:var(--text-muted); margin-bottom:12px;">Watch the full ad to get paid</p>
-      <button class="btn-gold btn-GoldCenter" style="margin-bottom:0;" onclick="watchAdTask()">▷ Watch ad (+5 <span class="coin-sym">$VIKING</span>)</button>
+      <div class="prog-bg-3d" style="margin-bottom:12px;"><div class="prog-fill-3d" id="ads-prog-bar" style="width:0%;"></div></div>
+      <button class="btn-3d-gold" style="margin-bottom:0;" onclick="watchAdTask()">▷ Watch Ad (+5 <span class="coin-sym">$VIKING</span>)</button>
     </div>
 
-    <div class="section-divider">
-      <h3>CLAN TASKS</h3>
-      <span>CHANNELS · GROUPS · BOTS</span>
-    </div>
-
-    <!-- Channel 1 Task -->
-    <div class="card">
-      <div style="display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:10px;">
-        <div style="display:flex; gap:10px;">
-          <div class="icon-btn">📢</div>
-          <div>
-            <h4 style="font-size:14.5px;"><span class="coin-sym">$VIKING</span> NEWS CHANNEL</h4>
-            <p style="font-size:12px; color:var(--text-muted); margin-top:2px;">Subscribe to our official Telegram channel.</p>
-          </div>
-        </div>
-        <span style="color:var(--gold-light); font-size:12px; font-weight:800;">+50 <span class="coin-sym">$VIKING</span></span>
-      </div>
-      <button class="btn-gold btn-GoldCenter" id="ch-task-1-btn" style="margin-bottom:6px; padding:12px;" onclick="verifyChannelTask(1)">Join & Verify</button>
-      <div style="text-align:center; font-size:11.5px; color:var(--text-muted); text-decoration:underline; cursor:pointer;" onclick="openChannelUrl(1)">Open channel</div>
-    </div>
-
-    <!-- Channel 2 Task -->
-    <div class="card">
-      <div style="display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:10px;">
-        <div style="display:flex; gap:10px;">
-          <div class="icon-btn">💬</div>
-          <div>
-            <h4 style="font-size:14.5px;"><span class="coin-sym">$VIKING</span> COMMUNITY CLAN</h4>
-            <p style="font-size:12px; color:var(--text-muted); margin-top:2px;">Join the Valhalla discussion group.</p>
-          </div>
-        </div>
-        <span style="color:var(--gold-light); font-size:12px; font-weight:800;">+50 <span class="coin-sym">$VIKING</span></span>
-      </div>
-      <button class="btn-gold btn-GoldCenter" id="ch-task-2-btn" style="margin-bottom:6px; padding:12px;" onclick="verifyChannelTask(2)">Join & Verify</button>
-      <div style="text-align:center; font-size:11.5px; color:var(--text-muted); text-decoration:underline; cursor:pointer;" onclick="openChannelUrl(2)">Open group</div>
-    </div>
-
-    <div class="section-divider">
-      <h3>VALHALLA BOARD</h3>
-      <span>ON-CHAIN & HOLD</span>
-    </div>
-
-    <div class="card" style="display:flex; justify-content:space-between; align-items:center;">
-      <div style="display:flex; gap:10px; align-items:center;">
-        <div class="icon-btn">👛</div>
-        <div>
-          <h4 style="font-size:14px;">Hold <span class="coin-sym">$VIKING</span>. Rule the Seas.</h4>
-          <p style="font-size:11.5px; color:var(--text-muted);">Buy & hold coins in your wallet to boost level 1–100.</p>
-        </div>
-      </div>
-      <span style="color:var(--gold-light); font-size:11px; font-weight:800; cursor:pointer;" onclick="openBuyModal()">ON-CHAIN</span>
-    </div>
-  </div>
-
-  <!-- ================= 3. BOOST TAB (LEVELS 1 TO 100) ================= -->
-  <div id="page-boost" class="page">
-    <div class="hero-banner">
-      <div class="hero-title">
-        <h1>BOOST</h1>
-        <p>Increase your mining speed (Levels 1–100)</p>
-      </div>
-      <div class="viking-avatar-art">⚡</div>
-    </div>
-
-    <!-- Dual Balance Speed Calculation Card -->
-    <div class="card">
-      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;">
-        <h2 style="font-size:22px; font-weight:900;" id="boost-lvl-header">Level 1</h2>
-        <span class="claimed-pill" id="boost-rank-badge">Shieldbearers</span>
-      </div>
-      <div style="font-size:12.5px; color:var(--gold-light); font-weight:700; margin-bottom:12px;" id="boost-pnl-txt">
-        Daily Output: +5.00 $VIKING/d
-      </div>
-
-      <!-- The 3 Boxes: Wallet + Mined in App = Your Total Hold -->
-      <div class="grid-3">
-        <div class="sub-box">
-          <div style="font-size:10px; color:var(--text-muted); margin-bottom:4px;">Wallet (Bought)</div>
-          <div style="font-size:14px; font-weight:900;" id="boost-wallet-bal">0</div>
-        </div>
-        <div class="sub-box">
-          <div style="font-size:10px; color:var(--text-muted); margin-bottom:4px;">Mined in app</div>
-          <div style="font-size:14px; font-weight:900;" id="boost-app-bal">0</div>
-        </div>
-        <div class="sub-box" style="border-color:var(--gold); background:rgba(245,158,11,0.12);">
-          <div style="font-size:10px; color:var(--gold-light); margin-bottom:4px;">Your total hold</div>
-          <div style="font-size:14px; font-weight:900; color:var(--gold-light);" id="boost-total-hold">0</div>
-        </div>
-      </div>
-
-      <p style="font-size:11.5px; color:var(--text-muted); margin-bottom:10px;" id="boost-needed-txt">
-        Your speed increases automatically from both App Coins + Linked Wallet Coins!
-      </p>
-
-      <button class="btn-gold btn-GoldCenter" style="margin-bottom:0; padding:11px;" onclick="openBuyModal()">
-        🪙 Buy <span class="coin-sym">$VIKING</span> to Boost Wallet Hold & Speed
-      </button>
-    </div>
-
-    <h3 style="font-size:16px; margin-bottom:8px;">Speed packs (Levels 1 – 100)</h3>
-    <p style="font-size:11.5px; color:var(--text-muted); margin-bottom:12px;">
-      🛡️ Total Hold (<span id="boost-hold-inline">0</span> <span class="coin-sym">$VIKING</span>) unlocks your Viking miners:
-    </p>
-
-    <!-- 3 Tier Tabs for 1-100 -->
-    <div class="tier-tabs">
-      <div class="tier-tab active" id="tier-btn-1" onclick="selectLevelTier(1)">
-        <small>LEVEL 1–30</small>
-        <strong>Shieldbearers</strong>
-      </div>
-      <div class="tier-tab" id="tier-btn-2" onclick="selectLevelTier(2)">
-        <small>LEVEL 31–70</small>
-        <strong>Berserkers</strong>
-      </div>
-      <div class="tier-tab" id="tier-btn-3" onclick="selectLevelTier(3)">
-        <small>LEVEL 71–100</small>
-        <strong>Valhalla Kings</strong>
-      </div>
-    </div>
-
-    <!-- Pagination Controls (10 Levels per page) -->
-    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px;">
-      <button class="btn-bronze" style="width:95px; padding:8px;" onclick="changeLevelPage(-1)">Previous</button>
-      <div style="text-align:center;">
-        <div style="font-size:13px; font-weight:800;" id="lvl-page-title">Shieldbearers</div>
-        <div style="font-size:11px; color:var(--text-muted);" id="lvl-page-range">Level 1–10</div>
-      </div>
-      <button class="btn-gold btn-GoldCenter" style="width:95px; padding:8px; margin-bottom:0;" onclick="changeLevelPage(1)">Next</button>
-    </div>
-
-    <!-- 2-Column Grid for Level Cards -->
-    <div class="grid-2" id="levels-grid-container"></div>
-  </div>
-
-  <!-- ================= 4. FRIENDS TAB (CONDITIONAL 100 COINS) ================= -->
-  <div id="page-friends" class="page">
-    <div class="hero-banner">
-      <div class="hero-title">
-        <h1>FRIENDS</h1>
-        <p>Recruit Vikings & earn <span id="ref-rew-banner">100</span> <span class="coin-sym">$VIKING</span></p>
-      </div>
-      <div class="viking-avatar-art">📯</div>
-    </div>
-
-    <!-- Conditional Referral Rule Card -->
-    <div class="card" style="border-color:var(--gold);">
-      <h3 style="font-size:16px; color:var(--gold-light); margin-bottom:8px;">⚠️ Referral Reward Condition</h3>
-      <p style="font-size:12.5px; color:#e2e8f0; line-height:1.6;">
-        You earn <strong style="color:var(--gold-light);">+<span id="ref-rew-txt">100</span> <span class="coin-sym">$VIKING</span></strong> for each invited friend, <strong>ONLY AFTER</strong> your friend completes both steps:<br>
-        1️⃣ Links their TON Wallet to the bot.<br>
-        2️⃣ Buys at least <strong style="color:var(--gold-light);"><span id="ref-minbuy-txt">100</span> <span class="coin-sym">$VIKING</span></strong> coins.
-      </p>
-    </div>
-
-    <!-- Referral Stats -->
-    <div class="grid-3">
-      <div class="card" style="margin-bottom:0; padding:12px 8px; text-align:center;">
-        <div style="font-size:10px; color:var(--text-muted); margin-bottom:4px;">Pending Friends</div>
-        <div style="font-size:18px; font-weight:900; color:#facc15;" id="ref-pending-count">0</div>
-        <div style="font-size:9.5px; color:var(--text-muted);">No buy yet</div>
-      </div>
-      <div class="card" style="margin-bottom:0; padding:12px 8px; text-align:center;">
-        <div style="font-size:10px; color:var(--text-muted); margin-bottom:4px;">Verified Friends</div>
-        <div style="font-size:18px; font-weight:900; color:#22c55e;" id="ref-verified-count">0</div>
-        <div style="font-size:9.5px; color:#22c55e;">Bought 100+</div>
-      </div>
-      <div class="card" style="margin-bottom:0; padding:12px 8px; text-align:center;">
-        <div style="font-size:10px; color:var(--text-muted); margin-bottom:4px;">Total Earned</div>
-        <div style="font-size:18px; font-weight:900; color:var(--gold-light);" id="ref-earned-total">0</div>
-        <div style="font-size:9.5px; color:var(--gold-light);" class="coin-sym">$VIKING</div>
-      </div>
-    </div>
-
-    <!-- Invite Link Card -->
-    <div class="card">
-      <div style="font-size:11.5px; color:var(--text-muted); margin-bottom:6px;">Your Clan Invite Link:</div>
-      <input type="text" id="ref-link-box" class="input-box" readonly>
-      <div class="grid-2" style="margin-bottom:0;">
-        <button class="btn-gold btn-GoldCenter" style="margin-bottom:0; padding:12px;" onclick="copyRefLink()">📋 Copy Link</button>
-        <button class="btn-bronze" style="padding:12px;" onclick="shareRefLink()">🔗 Share</button>
-      </div>
-    </div>
-
-    <!-- Simulation Buttons for Testing the Referral Condition -->
-    <div class="card">
-      <div style="font-size:12px; font-weight:700; margin-bottom:8px; color:var(--text-muted);">🛠️ أزرار تجربة نظام الإحالة المشروط:</div>
-      <div class="grid-2" style="margin-bottom:0;">
-        <button class="btn-dark" onclick="simPendingFriend()">➕ دخول صديق (بدون شراء)</button>
-        <button class="btn-bronze" style="font-size:12px;" onclick="simQualifiedFriend()">✅ صديق ربط المحفظة واشترى 100 عملة (+100)</button>
-      </div>
-    </div>
-  </div>
-
-  <!-- ================= 5. PROFILE & WITHDRAW TAB ================= -->
-  <div id="page-profile" class="page">
-    <div class="hero-banner">
-      <div class="hero-title">
-        <h1>PROFILE 👑</h1>
-        <p>Manage wallet, buy coins & withdraw</p>
-      </div>
-      <div class="viking-avatar-art">🛡️</div>
-    </div>
-
-    <!-- User Info Card -->
-    <div class="card" style="display:flex; justify-content:space-between; align-items:center;">
-      <div style="display:flex; align-items:center; gap:12px;">
-        <div style="width:50px; height:50px; border-radius:50%; background:#dc2626; border:2px solid var(--gold); display:flex; align-items:center; justify-content:center; font-size:20px; font-weight:900;" id="prof-letter">V</div>
-        <div>
-          <h3 style="font-size:16px;" id="prof-name">Viking Warrior</h3>
-          <div style="font-size:12px; color:var(--text-muted);" id="prof-username">@viking_user</div>
-          <div style="font-size:11px; color:#64748b;" id="prof-id">ID 7216746</div>
-        </div>
-      </div>
-      <div style="width:48px; height:48px; border-radius:50%; border:2px solid var(--gold); display:flex; align-items:center; justify-content:center; font-size:24px; background:#1e1b18;">⚔️</div>
-    </div>
-
-    <!-- Connect Wallet Button -->
-    <button class="btn-gold btn-GoldCenter" id="prof-wallet-btn" onclick="connectWalletAction()">
-      👛 <span id="prof-wallet-txt">Connect TON Wallet</span>
-    </button>
-    <div id="ton-connect-container" style="display:flex; justify-content:center; margin-bottom:12px;"></div>
-
-    <!-- Hold Wallet (Purchased/On-Chain) -->
-    <div class="card" style="display:flex; justify-content:space-between; align-items:center;">
-      <div>
-        <h4 style="font-size:15px;">Hold wallet</h4>
-        <p style="font-size:12px; color:var(--text-muted); margin-top:3px;"><span class="coin-sym">$VIKING</span> on-chain 🔄</p>
-      </div>
-      <div style="text-align:right;">
-        <div style="font-size:18px; font-weight:900;"><span id="prof-hold-bal">0</span> 🪙</div>
-        <div style="font-size:11px; color:var(--text-muted);" id="prof-hold-usdt">≈ 0.00 USDT</div>
-      </div>
-    </div>
-
-    <!-- Mining Wallet (In-App) -->
-    <div class="card" style="display:flex; justify-content:space-between; align-items:center;">
-      <div>
-        <h4 style="font-size:15px;">Mining wallet</h4>
-        <p style="font-size:12px; color:var(--text-muted); margin-top:3px;">Linked to your account</p>
-      </div>
-      <div style="text-align:right;">
-        <div style="font-size:18px; font-weight:900;"><span id="prof-mine-bal">0</span> 🪙</div>
-        <div style="font-size:11px; color:var(--text-muted);" id="prof-mine-usdt">≈ 0.00 USDT</div>
-      </div>
-    </div>
-
-    <!-- Withdrawal Verification Status -->
-    <div id="wd-unlock-status" style="font-size:12.5px; font-weight:700; margin-bottom:12px; padding:10px 14px; border-radius:14px; background:rgba(239,68,68,0.15); border:1px solid #ef4444; color:#fca5a5;">
-      🔒 Withdrawal Locked: You must buy at least 100 $VIKING to unlock withdrawals!
-    </div>
-
-    <!-- Withdraw Section (Min 1000, Fee 50, Requires 100 Bought) -->
-    <div class="card">
-      <h3 style="font-size:16px; margin-bottom:10px;">Withdraw <span class="coin-sym">$VIKING</span></h3>
-      
-      <input type="number" id="wd-input-amt" class="input-box" placeholder="Minimum 1000">
-      
-      <p style="font-size:11.5px; color:var(--text-muted); margin-bottom:12px; line-height:1.5;">
-        Minimum <strong style="color:#fff;"><span id="wd-min-ui">1,000</span> <span class="coin-sym">$VIKING</span></strong>. The <strong style="color:var(--gold-light);"><span id="wd-fee-ui">50</span> <span class="coin-sym">$VIKING</span></strong> transfer fee is taken from the withdrawal.<br>
-        • Condition: Must purchase at least <strong style="color:var(--gold-light);"><span id="wd-reqbuy-ui">100</span> <span class="coin-sym">$VIKING</span></strong> (Your purchased: <span id="user-bought-ui" style="color:#fff; font-weight:800;">0</span>).
-      </p>
-
-      <button class="btn-gold btn-GoldCenter" style="margin-bottom:8px;" onclick="requestWithdrawal()">
-        ↗ Request withdrawal
-      </button>
-      <button class="btn-bronze" onclick="openBuyModal()">
-        🛒 Buy 100+ <span class="coin-sym">$VIKING</span> to Unlock Withdrawal
-      </button>
-    </div>
-
-    <!-- Withdrawal History -->
-    <div class="card">
-      <h3 style="font-size:16px; margin-bottom:12px;">Withdrawal history</h3>
-      <div id="wd-history-box" style="font-size:12px; color:var(--text-muted); text-align:center; padding:12px;">
-        No withdrawals yet.
-      </div>
-    </div>
-
-    <!-- DeDust & Live Chart Buttons -->
-    <div class="grid-2">
-      <div class="btn-bronze" style="padding:14px;" onclick="openBuyModal()">
-        <div style="font-size:16px; margin-bottom:4px;">🔄</div>
-        <div style="font-size:14px; font-weight:900; color:#fff;">DeDust</div>
-        <div style="font-size:10.5px; color:#fde047;">Buy <span class="coin-sym">$VIKING</span> in Telegram</div>
-      </div>
-      <div class="btn-gold" style="flex-direction:column; justify-content:center; padding:14px; margin-bottom:0;" onclick="showToast('📈 1 $VIKING = $' + config.coinPriceUsdt + ' USDT')">
-        <div style="font-size:16px; margin-bottom:4px;">📈</div>
-        <div style="font-size:14px; font-weight:900;">Live chart</div>
-        <div style="font-size:10.5px;"><span class="coin-sym">$VIKING</span> price</div>
-      </div>
-    </div>
-
-    <div style="margin-top:14px; padding:10px; font-size:11px; color:var(--text-muted);">
-      <div style="text-transform:uppercase; margin-bottom:4px;">JETTON CONTRACT</div>
-      <div style="color:#fff; font-family:monospace; word-break:break-all;" id="contract-addr-ui">EQCnT_6nreJHUaxbZw7g64gkP5vx6LvSXWFboW5tYsCpLS7I</div>
-    </div>
-  </div>
-
-  <!-- ================= 6. BUY $VIKING MODAL ================= -->
-  <div id="buy-modal" style="position:fixed; inset:0; background:rgba(0,0,0,0.85); backdrop-filter:blur(6px); display:none; align-items:center; justify-content:center; z-index:1000; padding:16px;">
-    <div class="card" style="width:100%; max-width:380px; border-color:var(--gold);">
+    <div class="card-3d">
       <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px;">
-        <h3 style="font-size:17px; color:var(--gold-light);">🪙 Buy <span class="coin-sym">$VIKING</span> Coins</h3>
-        <span style="font-size:20px; cursor:pointer;" onclick="closeBuyModal()">✕</span>
-      </div>
-      <p style="font-size:12px; color:var(--text-muted); margin-bottom:12px; line-height:1.5;">
-        Buying <strong style="color:#fff;">100+ <span class="coin-sym">$VIKING</span></strong> immediately:<br>
-        ✅ Unlocks Withdrawals in your Profile.<br>
-        ✅ Adds to your <strong>Wallet Hold</strong> & upgrades your Mining Level (1–100).<br>
-        ✅ Qualifies your Referral Bonus (+100 coins).
-      </p>
-
-      <label style="font-size:11.5px; color:var(--text-muted); display:block; margin-bottom:6px;">Enter Amount of <span class="coin-sym">$VIKING</span> to Buy (Min 100):</label>
-      <input type="number" id="buy-coin-input" class="input-box" value="100" min="100" step="50" oninput="updateBuyCost()">
-
-      <div class="grid-3" style="margin-bottom:12px;">
-        <div class="btn-dark" onclick="setBuyPreset(100)">100</div>
-        <div class="btn-dark" onclick="setBuyPreset(500)">500</div>
-        <div class="btn-dark" onclick="setBuyPreset(2000)">2,000</div>
-      </div>
-
-      <div class="sub-box" style="margin-bottom:14px; display:flex; justify-content:space-between; font-size:13px;">
-        <span>Cost in TON:</span>
-        <strong style="color:var(--gold-light);" id="buy-ton-cost">0.10 TON</strong>
-      </div>
-
-      <button class="btn-gold btn-GoldCenter" style="margin-bottom:0;" onclick="confirmBuyCoins()">⚡ Confirm Purchase</button>
-    </div>
-  </div>
-
-  <!-- ================= 7. OWNER ADMIN PANEL ================= -->
-  <div id="page-admin" class="page admin-wrap">
-    <div class="card">
-      <h3 style="color:var(--gold-light); margin-bottom:6px;">⚙️ لوحة تحكم صاحب البوت ($VIKING)</h3>
-      <p style="font-size:11.5px; color:var(--text-muted); margin-bottom:14px;">تحكم كامل في العملة، شروط السحب، الإحالات، وأرصدة التجربة.</p>
-
-      <div class="grid-2">
         <div>
-          <label>اسم البوت:</label>
-          <input type="text" id="adm-title" class="input-box">
+          <h4 style="font-size:15px;">📢 Join Official Channel</h4>
+          <p style="font-size:11.5px; color:var(--text-muted);">Subscribe & verify membership</p>
         </div>
-        <div>
-          <label>رمز العملة:</label>
-          <input type="text" id="adm-sym" class="input-box">
-        </div>
-      </div>
-
-      <div class="grid-2">
-        <div>
-          <label>رصيد التطبيق (Mined):</label>
-          <input type="number" id="adm-minebal" class="input-box">
-        </div>
-        <div>
-          <label>رصيد المحفظة (Wallet Hold):</label>
-          <input type="number" id="adm-holdbal" class="input-box">
-        </div>
-      </div>
-
-      <div class="grid-2">
-        <div>
-          <label>الحد الأدنى للسحب:</label>
-          <input type="number" id="adm-minwd" class="input-box">
-        </div>
-        <div>
-          <label>رسوم السحب (Fee):</label>
-          <input type="number" id="adm-wdfee" class="input-box">
-        </div>
-      </div>
-
-      <div class="grid-2">
-        <div>
-          <label>شرط الشراء لفتح السحب والإحالة:</label>
-          <input type="number" id="adm-reqbuy" class="input-box">
-        </div>
-        <div>
-          <label>مكافأة الإحالة المشروطة:</label>
-          <input type="number" id="adm-refrew" class="input-box">
-        </div>
-      </div>
-
-      <div class="grid-2">
-        <div>
-          <label>📢 رابط القناة 1:</label>
-          <input type="text" id="adm-ch1" class="input-box">
-        </div>
-        <div>
-          <label>💬 رابط القناة 2:</label>
-          <input type="text" id="adm-ch2" class="input-box">
-        </div>
-      </div>
-
-      <div class="grid-2">
-        <div>
-          <label>يوزر البوت (بدون @):</label>
-          <input type="text" id="adm-botuser" class="input-box">
-        </div>
-        <div>
-          <label>الرقم السري للأدمن:</label>
-          <input type="text" id="adm-pin" class="input-box">
-        </div>
-      </div>
-
-      <button class="btn-gold btn-GoldCenter" onclick="saveAdminConfig()">💾 حفظ وتطبيق التعديلات</button>
-      <button class="btn-dark" style="border-color:#ef4444; color:#f87171;" onclick="resetAllBotData()">🗑️ تصفير الحساب بالكامل</button>
-    </div>
-  </div>
-
-  <!-- ================= BOTTOM NAVIGATION (5 TABS) ================= -->
-  <div class="bottom-nav">
-    <div class="nav-item active" onclick="switchTab('mine', this)"><span class="nav-icon">⚔️</span>Mine</div>
-    <div class="nav-item" onclick="switchTab('tasks', this)"><span class="nav-icon">📡</span>Tasks</div>
-    <div class="nav-item" onclick="switchTab('boost', this)"><span class="nav-icon">⚡</span>Boost</div>
-    <div class="nav-item" onclick="switchTab('friends', this)"><span class="nav-icon">👥</span>Friends</div>
-    <div class="nav-item" onclick="switchTab('profile', this)"><span class="nav-icon">👑</span>Profile</div>
-  </div>
-
-  <script>
-    const tg = window.Telegram.WebApp;
-    tg.expand();
-
-    const tgUser = tg.initDataUnsafe?.user || { id: 8084159834, first_name: "MANSAWY", username: "tigersmm_shop" };
-
-    // الإعدادات الافتراضية
-    const defaultConfig = {
-      brandTitle: "$VIKING MINER",
-      coinSym: "$VIKING",
-      minWithdraw: 1000,
-      withdrawFee: 50,
-      requiredBuy: 100,
-      refReward: 100,
-      coinPriceUsdt: 0.001,
-      tonPriceCoins: 1000,
-      channel1: "https://t.me/YGRAM1",
-      channel2: "https://t.me/telegram",
-      botUsername: "AURMiningbot",
-      adminPin: "202020"
-    };
-
-    let config = Object.assign({}, defaultConfig, JSON.parse(localStorage.getItem('vk_config') || "{}"));
-
-    // الأرصدة والمتغيرات
-    let minedInApp = parseFloat(localStorage.getItem('vk_mined_app'));
-    if (isNaN(minedInApp) || minedInApp < 0) minedInApp = 0;
-
-    let walletHold = parseFloat(localStorage.getItem('vk_wallet_hold'));
-    if (isNaN(walletHold) || walletHold < 0) walletHold = 0;
-
-    let purchasedCoins = parseFloat(localStorage.getItem('vk_purchased'));
-    if (isNaN(purchasedCoins) || purchasedCoins < 0) purchasedCoins = 0;
-
-    let lastCollectTime = parseInt(localStorage.getItem('vk_last_collect')) || Date.now();
-    let adsWatched = parseInt(localStorage.getItem('vk_ads_today')) || 0;
-    let pendingRefs = parseInt(localStorage.getItem('vk_refs_pending')) || 0;
-    let verifiedRefs = parseInt(localStorage.getItem('vk_refs_verified')) || 0;
-    let linkedWalletAddr = localStorage.getItem('vk_wallet_addr') || "";
-    let wdHistory = JSON.parse(localStorage.getItem('vk_wd_hist') || "[]");
-    let turboUntil = parseInt(localStorage.getItem('vk_turbo_until')) || 0;
-
-    // ================= بناء جدول الـ 100 مستوى ديناميكياً =================
-    const LEVELS_DATA = [];
-    for (let i = 1; i <= 100; i++) {
-      // المستوى 1 يبدأ من 0 عملة، وكل مستوى يحتاج رصيد إجمالي أكبر (تطبيق + محفظة)
-      const reqHold = i === 1 ? 0 : Math.round(Math.pow(i - 1, 1.85) * 80);
-      const ths = +(0.20 + (i - 1) * 0.12).toFixed(2);
-      const perDay = +(5.00 + (i - 1) * 3.25).toFixed(2);
-      let groupName = "Shieldbearer";
-      if (i > 30 && i <= 70) groupName = "Berserker";
-      else if (i > 70) groupName = "Valhalla King";
-      LEVELS_DATA.push({ level: i, name: `${groupName} ${i}`, reqHold, ths, perDay, groupName });
-    }
-
-    let currentLevelPage = 1; // 1 to 10 (each page shows 10 levels)
-
-    function showToast(msg, bg = "#d97706") {
-      const t = document.getElementById('toast');
-      t.innerText = msg;
-      t.style.background = bg;
-      t.style.display = 'block';
-      setTimeout(() => t.style.display = 'none', 2800);
-    }
-
-    // حساب المستوى الحالي (1 إلى 100) بناءً على (عملات التطبيق + عملات المحفظة المربوطة)
-    function getCurrentLevelObj() {
-      const totalHold = minedInApp + walletHold;
-      let cur = LEVELS_DATA[0];
-      for (let i = 0; i < LEVELS_DATA.length; i++) {
-        if (totalHold >= LEVELS_DATA[i].reqHold) cur = LEVELS_DATA[i];
-        else break;
-      }
-      const next = LEVELS_DATA[Math.min(99, cur.level)] || cur;
-      return { cur, next, totalHold };
-    }
-
-    function applyUI() {
-      const { cur, next, totalHold } = getCurrentLevelObj();
-      const isTurbo = Date.now() < turboUntil;
-      const mult = isTurbo ? 2 : 1;
-
-      document.getElementById('ui-brand-title').innerText = config.brandTitle;
-      document.querySelectorAll('.coin-sym').forEach(el => el.innerText = config.coinSym);
-
-      // صفحة التعدين (Mine)
-      document.getElementById('mine-ths').innerText = (cur.ths * mult).toFixed(3) + " TH/s" + (isTurbo ? " 🔥" : "");
-      document.getElementById('mine-lvl-txt').innerText = "Level " + cur.level;
-      document.getElementById('mine-rank-title').innerText = cur.name;
-      document.getElementById('mine-claimed-total').innerText = Math.floor(minedInApp).toLocaleString();
-      document.getElementById('mine-day-rate').innerText = `${(cur.perDay * mult).toFixed(2)} ${config.coinSym}/d`;
-
-      if (cur.level < 100) {
-        const toGo = Math.max(0, Math.ceil(next.reqHold - totalHold));
-        const spanRange = Math.max(1, next.reqHold - cur.reqHold);
-        const pct = Math.min(100, Math.max(5, Math.floor(((totalHold - cur.reqHold) / spanRange) * 100)));
-        document.getElementById('mine-next-info').innerText = `Next: level ${next.level} · ${next.perDay} ${config.coinSym}/d`;
-        document.getElementById('mine-to-go').innerText = `${toGo.toLocaleString()} ${config.coinSym} to go`;
-        document.getElementById('mine-prog-bar').style.width = pct + "%";
-        document.getElementById('boost-needed-txt').innerText = `You need ${toGo.toLocaleString()} more ${config.coinSym} (in App or Wallet) for Level ${next.level}.`;
-      } else {
-        document.getElementById('mine-next-info').innerText = "MAX LEVEL 100 REACHED!";
-        document.getElementById('mine-to-go').innerText = "Valhalla Legend";
-        document.getElementById('mine-prog-bar').style.width = "100%";
-      }
-
-      // صفحة المهام (Tasks)
-      document.getElementById('ads-watched-txt').innerText = `${adsWatched}/10`;
-      document.getElementById('ads-prog-bar').style.width = (adsWatched * 10) + "%";
-      if (localStorage.getItem('vk_task1')) document.getElementById('ch-task-1-btn').innerText = "✓ Done";
-      if (localStorage.getItem('vk_task2')) document.getElementById('ch-task-2-btn').innerText = "✓ Done";
-
-      // صفحة السرعة والمستويات (Boost 1-100)
-      document.getElementById('boost-lvl-header').innerText = "Level " + cur.level;
-      document.getElementById('boost-rank-badge').innerText = cur.groupName + "s";
-      document.getElementById('boost-pnl-txt').innerText = `Daily Speed: +${cur.perDay} ${config.coinSym}/d (${cur.ths} TH/s)`;
-      document.getElementById('boost-wallet-bal').innerText = Math.floor(walletHold).toLocaleString();
-      document.getElementById('boost-app-bal').innerText = Math.floor(minedInApp).toLocaleString();
-      document.getElementById('boost-total-hold').innerText = Math.floor(totalHold).toLocaleString();
-      document.getElementById('boost-hold-inline').innerText = Math.floor(totalHold).toLocaleString();
-      renderLevelsGrid();
-
-      // صفحة الإحالات المشروطة (Friends)
-      document.getElementById('ref-rew-banner').innerText = config.refReward;
-      document.getElementById('ref-rew-txt').innerText = config.refReward;
-      document.getElementById('ref-minbuy-txt').innerText = config.requiredBuy;
-      document.getElementById('ref-pending-count').innerText = pendingRefs;
-      document.getElementById('ref-verified-count').innerText = verifiedRefs;
-      document.getElementById('ref-earned-total').innerText = (verifiedRefs * config.refReward).toLocaleString();
-      document.getElementById('ref-link-box').value = `https://t.me/${config.botUsername}?start=ref_${tgUser.id}`;
-
-      // صفحة البروفايل والسحب (Profile)
-      document.getElementById('prof-name').innerText = tgUser.first_name || "Viking";
-      document.getElementById('prof-letter').innerText = (tgUser.first_name || "V").charAt(0).toUpperCase();
-      document.getElementById('prof-username').innerText = tgUser.username ? "@" + tgUser.username : "@viking_warrior";
-      document.getElementById('prof-id').innerText = "ID " + tgUser.id;
-
-      if (linkedWalletAddr) {
-        const shortW = linkedWalletAddr.substring(0, 4) + "..." + linkedWalletAddr.slice(-4);
-        document.getElementById('prof-wallet-txt').innerText = `Wallet connected · ${shortW}`;
-      } else {
-        document.getElementById('prof-wallet-txt').innerText = "Connect TON Wallet";
-      }
-
-      document.getElementById('prof-hold-bal').innerText = Math.floor(walletHold).toLocaleString();
-      document.getElementById('prof-hold-usdt').innerText = "≈ " + (walletHold * config.coinPriceUsdt).toFixed(4) + " USDT";
-      document.getElementById('prof-mine-bal').innerText = Math.floor(minedInApp).toLocaleString();
-      document.getElementById('prof-mine-usdt').innerText = "≈ " + (minedInApp * config.coinPriceUsdt).toFixed(4) + " USDT";
-
-      document.getElementById('wd-min-ui').innerText = config.minWithdraw.toLocaleString();
-      document.getElementById('wd-fee-ui').innerText = config.withdrawFee;
-      document.getElementById('wd-reqbuy-ui').innerText = config.requiredBuy;
-      document.getElementById('user-bought-ui').innerText = purchasedCoins + " " + config.coinSym;
-
-      const statusBanner = document.getElementById('wd-unlock-status');
-      if (linkedWalletAddr && purchasedCoins >= config.requiredBuy) {
-        statusBanner.style.background = "rgba(34, 197, 94, 0.15)";
-        statusBanner.style.borderColor = "#22c55e";
-        statusBanner.style.color = "#86efac";
-        statusBanner.innerHTML = `✅ Wallet verified & ${purchasedCoins} ${config.coinSym} purchased — Withdrawals Unlocked!`;
-      } else {
-        statusBanner.style.background = "rgba(239, 68, 68, 0.15)";
-        statusBanner.style.borderColor = "#ef4444";
-        statusBanner.style.color = "#fca5a5";
-        statusBanner.innerHTML = `🔒 Withdrawal Locked: Connect Wallet & buy at least ${config.requiredBuy} ${config.coinSym} to unlock withdrawals!`;
-      }
-
-      renderWithdrawHistory();
-    }
-
-    // تحديث عداد التعدين الحي والمؤقت
-    function updateLiveMining() {
-      const { cur } = getCurrentLevelObj();
-      const mult = Date.now() < turboUntil ? 2 : 1;
-      const perSecond = (cur.perDay * mult) / 86400;
-      const elapsedSec = Math.max(0, (Date.now() - lastCollectTime) / 1000);
-      const pending = elapsedSec * perSecond;
-
-      document.getElementById('live-mined-num').innerText = pending.toFixed(6);
-
-      // مؤقت الشفت 24 ساعة
-      const remainingSec = Math.max(0, 86400 - Math.floor(elapsedSec % 86400));
-      const hrs = String(Math.floor(remainingSec / 3600)).padStart(2, '0');
-      const mins = String(Math.floor((remainingSec % 3600) / 60)).padStart(2, '0');
-      const secs = String(remainingSec % 60).padStart(2, '0');
-      document.getElementById('shift-timer').innerText = `${hrs} : ${mins} : ${secs}`;
-    }
-
-    function collectMining() {
-      const { cur } = getCurrentLevelObj();
-      const mult = Date.now() < turboUntil ? 2 : 1;
-      const perSecond = (cur.perDay * mult) / 86400;
-      const elapsedSec = Math.max(0, (Date.now() - lastCollectTime) / 1000);
-      const pending = elapsedSec * perSecond;
-
-      minedInApp += pending;
-      lastCollectTime = Date.now();
-      localStorage.setItem('vk_mined_app', minedInApp);
-      localStorage.setItem('vk_last_collect', lastCollectTime);
-
-      applyUI();
-      showToast(`⚔️ Collected +${pending.toFixed(4)} ${config.coinSym}!`);
-    }
-
-    function activateTurbo() {
-      turboUntil = Date.now() + 5 * 60 * 1000;
-      localStorage.setItem('vk_turbo_until', turboUntil);
-      applyUI();
-      showToast("⚡ Turbo x2 Activated for 5 Minutes!");
-    }
-
-    // ================= عرض شبكة المستويات 1 إلى 100 =================
-    function selectLevelTier(tier) {
-      document.querySelectorAll('.tier-tab').forEach(t => t.classList.remove('active'));
-      document.getElementById('tier-btn-' + tier).classList.add('active');
-      if (tier === 1) currentLevelPage = 1;
-      else if (tier === 2) currentLevelPage = 4;
-      else currentLevelPage = 8;
-      renderLevelsGrid();
-    }
-
-    function changeLevelPage(dir) {
-      currentLevelPage = Math.min(10, Math.max(1, currentLevelPage + dir));
-      renderLevelsGrid();
-    }
-
-    function renderLevelsGrid() {
-      const { cur } = getCurrentLevelObj();
-      const startIdx = (currentLevelPage - 1) * 10;
-      const pageItems = LEVELS_DATA.slice(startIdx, startIdx + 10);
-
-      document.getElementById('lvl-page-title').innerText = pageItems[0].groupName + "s";
-      document.getElementById('lvl-page-range').innerText = `Level ${pageItems[0].level}–${pageItems[pageItems.length - 1].level}`;
-
-      const container = document.getElementById('levels-grid-container');
-      container.innerHTML = pageItems.map(item => {
-        const isCurrent = item.level === cur.level;
-        const isPassed = item.level < cur.level;
-        const icon = item.level <= 30 ? "🛡️" : (item.level <= 70 ? "🪓" : "👑");
-
-        let btnHtml = "";
-        if (isCurrent) {
-          btnHtml = `<div class="btn-gold btn-GoldCenter" style="margin-bottom:0; padding:8px; font-size:11.5px;">✓ MINING</div>`;
-        } else if (isPassed) {
-          btnHtml = `<div class="btn-dark" style="padding:8px; font-size:11.5px;">PASSED</div>`;
-        } else {
-          btnHtml = `<div class="btn-dark" style="padding:8px; font-size:11px; color:#facc15;" onclick="openBuyModal()">🔒 HOLD ${item.reqHold.toLocaleString()}</div>`;
-        }
-
-        return `
-          <div class="miner-card" style="${isCurrent ? 'border-color:#fde047; box-shadow:0 0 15px rgba(245,158,11,0.3);' : ''}">
-            <div>
-              <div class="miner-art ${(!isCurrent && !isPassed) ? 'locked' : ''}">
-                <span class="miner-status-icon">${isCurrent ? '✅' : (isPassed ? '⚔️' : '🔒')}</span>
-                <div style="font-size:36px;">${icon}</div>
-                <div style="font-size:10px; color:var(--gold-light); margin-top:4px;">LVL ${item.level}</div>
-              </div>
-              <h4 style="font-size:13px; margin-bottom:4px;">${item.name}</h4>
-              <div style="display:flex; justify-content:space-between; font-size:11px; margin-bottom:10px;">
-                <span style="color:var(--gold-light); font-weight:800;">⚡ +${item.ths} TH/s</span>
-                <span style="color:var(--text-muted);">${item.perDay}/d</span>
-              </div>
-            </div>
-            ${btnHtml}
-          </div>
-        `;
-      }).join('');
-    }
-
-    // ================= المهام (Tasks) =================
-    function watchAdTask() {
-      if (adsWatched >= 10) return showToast("لقد شاهدت الحد الأقصى (10 إعلانات) اليوم!", "#ef4444");
-      adsWatched++;
-      minedInApp += 5;
-      localStorage.setItem('vk_ads_today', adsWatched);
-      localStorage.setItem('vk_mined_app', minedInApp);
-      applyUI();
-      showToast(`📺 تم مشاهدة الإعلان! +5 ${config.coinSym}`);
-    }
-
-    let chVisited = { 1: false, 2: false };
-    function openChannelUrl(num) {
-      chVisited[num] = true;
-      const url = num === 1 ? config.channel1 : config.channel2;
-      if (tg.openTelegramLink) tg.openTelegramLink(url);
-      else window.open(url, '_blank');
-    }
-
-    function verifyChannelTask(num) {
-      if (localStorage.getItem('vk_task' + num)) return showToast("تم استلام المكافأة مسبقاً!", "#f59e0b");
-      if (!chVisited[num]) {
-        openChannelUrl(num);
-        return showToast("📢 اشترك في القناة أولاً ثم اضغط Verify!");
-      }
-      minedInApp += 50;
-      localStorage.setItem('vk_mined_app', minedInApp);
-      localStorage.setItem('vk_task' + num, 'true');
-      applyUI();
-      showToast(`🎉 تم التحقق! +50 ${config.coinSym}`);
-    }
-
-    // ================= نظام الإحالة المشروط (100 عملة بشرط ربط المحفظة وشراء 100 عملة) =================
-    function copyRefLink() {
-      const box = document.getElementById('ref-link-box');
-      box.select();
-      navigator.clipboard.writeText(box.value);
-      showToast("📋 تم نسخ رابط الإحالة!");
-    }
-
-    function shareRefLink() {
-      const url = document.getElementById('ref-link-box').value;
-      const txt = `Join ${config.brandTitle} & Raid the Seas for ${config.coinSym}! ⚔️`;
-      const shareUrl = `https://t.me/share/url?url=${encodeURIComponent(url)}&text=${encodeURIComponent(txt)}`;
-      if (tg.openTelegramLink) tg.openTelegramLink(shareUrl);
-      else window.open(shareUrl, '_blank');
-    }
-
-    function simPendingFriend() {
-      pendingRefs++;
-      localStorage.setItem('vk_refs_pending', pendingRefs);
-      applyUI();
-      showToast("⏳ دخل صديق جديد (معلق: لم يربط المحفظة أو يشتري 100 عملة بعد)", "#f59e0b");
-    }
-
-    function simQualifiedFriend() {
-      if (pendingRefs > 0) pendingRefs--;
-      verifiedRefs++;
-      minedInApp += config.refReward;
-      localStorage.setItem('vk_refs_pending', pendingRefs);
-      localStorage.setItem('vk_refs_verified', verifiedRefs);
-      localStorage.setItem('vk_mined_app', minedInApp);
-      applyUI();
-      showToast(`✅ صديقك ربط المحفظة واشترى ${config.requiredBuy} عملة! ربحت +${config.refReward} ${config.coinSym}`);
-    }
-
-    // ================= ربط المحفظة وشراء العملة والسحب المشروط =================
-    let tonConnectUI = null;
-    try {
-      tonConnectUI = new TON_CONNECT_UI.TonConnectUI({
-        manifestUrl: 'https://ton-connect.github.io/demo-dapp-with-react-ui/tonconnect-manifest.json',
-        buttonRootId: 'ton-connect-container'
-      });
-      tonConnectUI.onStatusChange(wallet => {
-        if (wallet && wallet.account?.address) {
-          linkedWalletAddr = wallet.account.address;
-          localStorage.setItem('vk_wallet_addr', linkedWalletAddr);
-          applyUI();
-          showToast("👛 تم ربط محفظة TON بنجاح!");
-        }
-      });
-    } catch (e) {}
-
-    function connectWalletAction() {
-      if (tonConnectUI) {
-        tonConnectUI.openModal();
-      } else {
-        const addr = prompt("أدخل عنوان محفظة TON الخاصة بك (UQ...):", linkedWalletAddr || "UQA8_viking_wallet_8o9y");
-        if (addr && addr.trim().length > 5) {
-          linkedWalletAddr = addr.trim();
-          localStorage.setItem('vk_wallet_addr', linkedWalletAddr);
-          applyUI();
-          showToast("✅ تم ربط المحفظة بنجاح!");
-        }
-      }
-    }
-
-    function openBuyModal() {
-      document.getElementById('buy-modal').style.display = 'flex';
-      updateBuyCost();
-    }
-
-    function closeBuyModal() {
-      document.getElementById('buy-modal').style.display = 'none';
-    }
-
-    function setBuyPreset(amt) {
-      document.getElementById('buy-coin-input').value = amt;
-      updateBuyCost();
-    }
-
-    function updateBuyCost() {
-      const coins = parseFloat(document.getElementById('buy-coin-input').value) || 0;
-      const tonCost = (coins / config.tonPriceCoins).toFixed(2);
-      document.getElementById('buy-ton-cost').innerText = tonCost + " TON";
-    }
-
-    function confirmBuyCoins() {
-      const coins = parseFloat(document.getElementById('buy-coin-input').value) || 0;
-      if (coins < config.requiredBuy) {
-        return showToast(`⚠️ الحد الأدنى للشراء هو ${config.requiredBuy} ${config.coinSym}`, "#ef4444");
-      }
-      if (!linkedWalletAddr) {
-        linkedWalletAddr = "UQA8_VikingHold_8o9y";
-        localStorage.setItem('vk_wallet_addr', linkedWalletAddr);
-      }
-
-      walletHold += coins;
-      purchasedCoins += coins;
-      localStorage.setItem('vk_wallet_hold', walletHold);
-      localStorage.setItem('vk_purchased', purchasedCoins);
-
-      closeBuyModal();
-      applyUI();
-      showToast(`🎉 تم شراء +${coins} ${config.coinSym}! زادت سرعة التعدين وتم فتح السحب!`);
-    }
-
-    function requestWithdrawal() {
-      // 1. التحقق من ربط المحفظة
-      if (!linkedWalletAddr) {
-        return showToast("❌ يجب ربط محفظتك أولاً قبل السحب!", "#ef4444");
-      }
-      // 2. التحقق من شرط شراء 100 عملة على الأقل لفتح السحب
-      if (purchasedCoins < config.requiredBuy) {
-        openBuyModal();
-        return showToast(`🔒 لفتح السحب يجب شراء ${config.requiredBuy} ${config.coinSym} على الأقل أولاً!`, "#ef4444");
-      }
-
-      const amt = parseFloat(document.getElementById('wd-input-amt').value) || 0;
-      // 3. التحقق من الحد الأدنى 1000 عملة
-      if (amt < config.minWithdraw) {
-        return showToast(`⚠️ الحد الأدنى للسحب هو ${config.minWithdraw} ${config.coinSym}`, "#ef4444");
-      }
-      if (amt > minedInApp) {
-        return showToast("❌ رصيدك في البوت لا يكفي لهذا المبلغ!", "#ef4444");
-      }
-
-      const netReceive = amt - config.withdrawFee;
-      minedInApp -= amt;
-      localStorage.setItem('vk_mined_app', minedInApp);
-
-      wdHistory.unshift({
-        amt: amt,
-        net: netReceive,
-        fee: config.withdrawFee,
-        date: "Just now"
-      });
-      localStorage.setItem('vk_wd_hist', JSON.stringify(wdHistory));
-
-      document.getElementById('wd-input-amt').value = "";
-      applyUI();
-      showToast(`✅ تم السحب! الصافي بعد خصم ${config.withdrawFee} رسوم: ${netReceive} ${config.coinSym}`);
-    }
-
-    function renderWithdrawHistory() {
-      const box = document.getElementById('wd-history-box');
-      if (wdHistory.length === 0) return;
-      box.innerHTML = wdHistory.map(w => `
-        <div style="display:flex; justify-content:space-between; align-items:center; padding:10px 0; border-bottom:1px solid rgba(255,255,255,0.06);">
-          <div style="display:flex; align-items:center; gap:10px; text-align:left;">
-            <div style="width:36px; height:36px; border-radius:10px; background:rgba(239,68,68,0.15); color:#ef4444; display:flex; align-items:center; justify-content:center; font-weight:900;">↗</div>
-            <div>
-              <div style="font-size:13.5px; font-weight:800; color:#fff;">Withdrawal</div>
-              <div style="font-size:11px; color:var(--text-muted);">${w.date} · Fee: ${w.fee}</div>
-            </div>
-          </div>
-          <div style="font-size:14px; font-weight:900; color:#ef4444;">-${w.amt.toLocaleString()} 🪙</div>
-        </div>
-      `).join('');
-    }
-
-    // ================= التنقل ولوحة تحكم صاحب البوت =================
-    function switchTab(pageId, navEl) {
-      document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
-      document.getElementById('page-' + pageId).classList.add('active');
-      if (navEl) {
-        document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
-        navEl.classList.add('active');
-      }
-    }
-
-    function openAdminAuth() {
-      const pin = prompt(`🔒 أدخل الرقم السري لصاحب البوت (الحالي: ${config.adminPin}):`);
-      if (pin === config.adminPin || pin === "202020" || pin === "1234") {
-        document.getElementById('adm-title').value = config.brandTitle;
-        document.getElementById('adm-sym').value = config.coinSym;
-        document.getElementById('adm-minebal').value = Math.floor(minedInApp);
-        document.getElementById('adm-holdbal').value = Math.floor(walletHold);
-        document.getElementById('adm-minwd').value = config.minWithdraw;
-        document.getElementById('adm-wdfee').value = config.withdrawFee;
-        document.getElementById('adm-reqbuy').value = config.requiredBuy;
-        document.getElementById('adm-refrew').value = config.refReward;
-        document.getElementById('adm-ch1').value = config.channel1;
-        document.getElementById('adm-ch2').value = config.channel2;
-        document.getElementById('adm-botuser').value = config.botUsername;
-        document.getElementById('adm-pin').value = config.adminPin;
-        switchTab('admin', null);
-      } else if (pin !== null) {
-        showToast("❌ الرقم السري غير صحيح!", "#ef4444");
-      }
-    }
-
-    function saveAdminConfig() {
-      config.brandTitle = document.getElementById('adm-title').value.trim() || "$VIKING MINER";
-      config.coinSym = document.getElementById('adm-sym').value.trim() || "$VIKING";
-      config.minWithdraw = parseInt(document.getElementById('adm-minwd').value) || 1000;
-      config.withdrawFee = parseInt(document.getElementById('adm-wdfee').value) || 50;
-      config.requiredBuy = parseInt(document.getElementById('adm-reqbuy').value) || 100;
-      config.refReward = parseInt(document.getElementById('adm-refrew').value) || 100;
-      config.channel1 = document.getElementById('adm-ch1').value.trim() || "https://t.me/YGRAM1";
-      config.channel2 = document.getElementById('adm-ch2').value.trim() || "https://t.me/telegram";
-      config.botUsername = document.getElementById('adm-botuser').value.trim() || "AURMiningbot";
-      config.adminPin = document.getElementById('adm-pin').value.trim() || "202020";
-
-      const mBal = parseFloat(document.getElementById('adm-minebal').value);
-      if (!isNaN(mBal)) { minedInApp = mBal; localStorage.setItem('vk_mined_app', minedInApp); }
-
-      const hBal = parseFloat(document.getElementById('adm-holdbal').value);
-      if (!isNaN(hBal)) { walletHold = hBal; localStorage.setItem('vk_wallet_hold', walletHold); }
-
-      localStorage.setItem('vk_config', JSON.stringify(config));
-      applyUI();
-      showToast("✅ تم حفظ جميع إعدادات $VIKING MINER!");
-      switchTab('mine', document.querySelectorAll('.nav-item')[0]);
-    }
-
-    function resetAllBotData() {
-      if (confirm("هل أنت متأكد من تصفير جميع الأرصدة والإعدادات؟")) {
-        localStorage.clear();
-        location.reload();
-      }
-    }
-
-    applyUI();
-    setInterval(updateLiveMining, 100);
-    updateLiveMining();
-  </script>
-</body>
-</html>
+        <span style="color:var(--gold-bright); font-weight:900; font-size:13px;">+50 <span class="coin-sym">$VIKING</span></span>
+    
