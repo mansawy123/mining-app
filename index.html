@@ -4,6 +4,13 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <title>$VIKING MINER</title>
+  
+  <!-- Open Graph Meta Tags for Link Preview -->
+  <meta property="og:title" content="$VIKING MINER">
+  <meta property="og:description" content="Join Viking Miner and start earning $VIKING now!">
+  <meta property="og:image" content="https://raw.githubusercontent.com/mansawy123/mining-app/main/viking-boot.jpg">
+  <meta property="og:type" content="website">
+
   <script src="https://telegram.org/js/telegram-web-app.js"></script>
   <script src="https://unpkg.com/@tonconnect/ui@latest/dist/tonconnect-ui.min.js"></script>
   <script src="https://sad.adsgram.ai/js/sad.min.js"></script>
@@ -68,7 +75,6 @@
     #boot-loader{position:fixed;inset:0;background:#05070b;z-index:99999;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:24px;text-align:center;overflow:hidden}
     #banned-screen{position:fixed;inset:0;background:#05070b;z-index:99999;display:none;flex-direction:column;align-items:center;justify-content:center;padding:24px;text-align:center}
     #toast{position:fixed;top:14px;left:50%;transform:translateX(-50%);background:#d97706;color:#fff;padding:8px 16px;border-radius:18px;font-size:12px;font-weight:800;display:none;z-index:100000;border:1px solid var(--gb);text-align:center;min-width:240px}
-    /* Daily Login Styles */
     .daily-grid{display:flex;justify-content:space-between;gap:4px;margin-bottom:8px;}
     .daily-box{flex:1;background:#0b0f17;border:1px solid #334155;border-radius:8px;padding:6px 2px;text-align:center;font-size:9px;color:#94a3b8;position:relative;}
     .daily-box.active{border-color:var(--gb);background:rgba(245,158,11,0.15);color:var(--gb);}
@@ -191,14 +197,11 @@
     </div>
 
     <div id="page-tasks" class="page">
-      <!-- Daily Login Task -->
       <div class="card-3d">
         <div style="display:flex;justify-content:space-between;margin-bottom:8px;">
           <h4 data-i18n="daily_login_title">🎁 Daily Login (7 Days)</h4>
         </div>
-        <div class="daily-grid" id="daily-streak-container">
-          <!-- JS will fill this -->
-        </div>
+        <div class="daily-grid" id="daily-streak-container"></div>
         <button class="btn-3d-gold" id="btn-claim-daily" data-i18n="claim_daily_btn">Claim Daily Reward</button>
       </div>
 
@@ -266,7 +269,7 @@
         <h3 style="color:var(--gb);margin-bottom:6px;" data-i18n="ref_rule_title">⚠️ Referral System</h3>
         <p style="font-size:11.5px;line-height:1.6;color:#e2e8f0;" data-i18n="ref_rule_desc">
           1️⃣ Activation: Referral activates when your friend reaches Level 2 (holds 100+ coins from STON.fi). You earn +100 instant bonus.<br>
-          2️⃣ 5% Mining Bonus: Every time your active friend collects their 24h mining, you automatically receive 5% of their mined coins!
+          2️⃣ 5% Mining Bonus: Every time your active friend collects their mining, you automatically receive 5% of their mined coins!
         </p>
       </div>
       <div class="grid-3" style="margin-bottom:10px;text-align:center;">
@@ -281,6 +284,13 @@
           <button class="btn-3d-bronze" id="btn-share-ref">🔗 <span data-i18n="share_btn">Share</span></button>
         </div>
       </div>
+      
+      <!-- قائمة أصدقاء الإحالة -->
+      <div class="card-3d">
+        <h4 data-i18n="my_referrals_title">👥 My Invited Friends</h4>
+        <div id="my-referrals-list" style="font-size: 11.5px; margin-top: 5px; max-height: 180px; overflow-y: auto;"></div>
+      </div>
+
       <div class="card-3d">
         <h4 style="margin-bottom:4px;" data-i18n="pending_ref_title">Pending Referral Profits</h4>
         <div style="font-size:24px;font-weight:900;color:var(--gb);margin-bottom:8px;" id="pending-ref-comm-display">0</div>
@@ -546,9 +556,9 @@
         wallet_hold:"Wallet Hold (Speed Source)", mined_app:"Mined in App",
         buy_upgrade_btn:"Buy Official Token on STON.fi to Upgrade Speed",
         ref_rule_title:"⚠️ Referral System",
-        ref_rule_desc:"1️⃣ Activation: Referral activates when your friend reaches Level 2 (holds 100+ coins from STON.fi). You earn +100 instant bonus.<br>2️⃣ 5% Mining Bonus: Every time your active friend collects their 24h mining, you automatically receive 5% of their mined amount!",
+        ref_rule_desc:"1️⃣ Activation: Referral activates when your friend reaches Level 2 (holds 100+ coins from STON.fi). You earn +100 instant bonus.<br>2️⃣ 5% Mining Bonus: Every time your active friend collects their mining, you automatically receive 5% of their mined amount!",
         ref_pending:"Pending", ref_verified:"Active", ref_earned:"5% Earned", copy_btn:"Copy Link", share_btn:"Share",
-        pending_ref_title:"Pending Referral Profits", collect_ref_btn:"Collect Referral Profits",
+        my_referrals_title:"👥 My Invited Friends", pending_ref_title:"Pending Referral Profits", collect_ref_btn:"Collect Referral Profits",
         ton_wallet_title:"TON Blockchain Wallet", connect_wallet_btn:"Connect TON Wallet",
         sync_hold_btn:"Verify Wallet Hold", disconnect_wallet_btn:"Disconnect",
         hold_wallet_lbl:"Wallet Hold (On-Chain)", mine_wallet_lbl:"Mined Balance",
@@ -572,7 +582,7 @@
         ref_rule_title:"⚠️ نظام الإحالات",
         ref_rule_desc:"1️⃣ التفعيل: تتفعل الإحالة عندما يصل صديقك للمستوى 2 (يحتفظ بـ 100 عملة في محفظته من STON.fi). تربح +100 عملة فوراً.<br>2️⃣ ربح 5% مستمر: بعد تفعيل الإحالة، كلما قام صديقك بجمع التعدين تحصل أنت تلقائياً على 5% من مبلغ تعدينه!",
         ref_pending:"معلق", ref_verified:"مفعل", ref_earned:"ربح 5%", copy_btn:"نسخ الرابط", share_btn:"مشاركة",
-        pending_ref_title:"أرباح الإحالات المعلقة", collect_ref_btn:"جمع أرباح الإحالات",
+        my_referrals_title:"👥 أصدقائي المدعوون", pending_ref_title:"أرباح الإحالات المعلقة", collect_ref_btn:"جمع أرباح الإحالات",
         ton_wallet_title:"محفظة شبكة TON", connect_wallet_btn:"ربط محفظة TON الآن",
         sync_hold_btn:"تحديث رصيد المحفظة", disconnect_wallet_btn:"إلغاء الربط",
         hold_wallet_lbl:"عملات المحفظة (Hold)", mine_wallet_lbl:"رصيد التعدين",
@@ -596,7 +606,7 @@
         ref_rule_title:"⚠️ Реферальная система",
         ref_rule_desc:"1️⃣ Активация: друг достигает Уровня 2 (держит от 100 монет на STON.fi). Вы получаете +100 монет.<br>2️⃣ Бонус 5%: каждый раз, когда активный друг собирает добычу, вы автоматически получаете 5% от его сбора!",
         ref_pending:"Ожидание", ref_verified:"Активно", ref_earned:"Доход 5%", copy_btn:"Копировать", share_btn:"Поделиться",
-        pending_ref_title:"Ожидаемый доход с рефералов", collect_ref_btn:"Собрать доход с рефералов",
+        my_referrals_title:"👥 Мои рефералы", pending_ref_title:"Ожидаемый доход", collect_ref_btn:"Собрать доход",
         ton_wallet_title:"Кошелек TON", connect_wallet_btn:"Подключить TON Кошелек",
         sync_hold_btn:"Обновить Холд", disconnect_wallet_btn:"Отключить",
         hold_wallet_lbl:"В кошельке", mine_wallet_lbl:"Баланс майнинга",
@@ -657,10 +667,9 @@
     let LEVELS_DATA = [];
     let currentLevelPage = 1;
     
-    // Daily Login State
     let dailyStreak = 0;
     let lastDailyCheckIn = 0;
-    const DAILY_REWARDS = [10, 20, 30, 50, 70, 100, 200]; // Rewards for day 1 to 7
+    const DAILY_REWARDS = [10, 20, 30, 50, 70, 100, 200];
 
     let bootProg = 0;
     const bootTimer = setInterval(() => {
@@ -739,9 +748,6 @@
           statusText = "✅";
         } else if (dayNum === dailyStreak + 1 && !hasClaimedToday) {
           boxClass += " active";
-        } else if (dayNum === dailyStreak + 1 && hasClaimedToday) {
-          boxClass += " claimed"; // Shows as claimed if already grabbed for the next upcoming day
-          statusText = "✅";
         }
 
         return `<div class="${boxClass}">
@@ -843,8 +849,20 @@
             if (invSnap.exists) {
               const idata = invSnap.data(), rArr = idata.referrals || [];
               if (!rArr.some(r => String(r.id) === CURRENT_UID)) {
-                rArr.push({ id: CURRENT_UID, name: tgUser.first_name || "Warrior", deviceHash: deviceFingerprint, status: idata.deviceHash === deviceFingerprint ? "⚠️ تعدد" : "Pending ⏳" });
+                rArr.push({ id: CURRENT_UID, name: tgUser.first_name || "Warrior", deviceHash: deviceFingerprint, status: idata.deviceHash === deviceFingerprint ? "⚠️ تعدد" : "Pending ⏳", profit: 0 });
                 await invRef.update({ referrals: rArr });
+                
+                // إشعار عند انضمام صديق جديد
+                if (config.botToken) {
+                  fetch(`https://api.telegram.org/bot${config.botToken}/sendMessage`, {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({
+                      chat_id: validInv,
+                      text: `🎉 <b>شخص جديد انضم عبر رابطك!</b>\n\n👤 الاسم: ${tgUser.first_name}\n⏳ حالة الإحالة: معلقة (في انتظار وصوله للمستوى 2)`
+                    })
+                  }).catch(e=>{});
+                }
               }
             }
           }
@@ -928,7 +946,6 @@
           updatedAt: Date.now()
         }, { merge: true });
 
-        // Referral activation check: Requires reaching Level 2 (Hold >= 100)
         const reqHold = LEVELS_DATA[1].reqHold; // Level 2 reqHold is 100
         if (invitedById && !refBonusPaid && linkedWalletAddr && walletHold >= reqHold) {
           refBonusPaid = true;
@@ -942,6 +959,18 @@
               mined: (idata.mined || 0) + Number(config.refReward || 100),
               referrals: updRefs
             });
+
+            // إشعار عند تفعيل الإحالة
+            if (config.botToken) {
+              fetch(`https://api.telegram.org/bot${config.botToken}/sendMessage`, {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                  chat_id: invitedById,
+                  text: `✅ <b>إحالتك أصبحت نشطة!</b>\n\n👤 الصديق: ${tgUser.first_name}\n🎁 لقد حصلت على مكافأة ${config.refReward} ${config.coinSym} في رصيدك!`
+                })
+              }).catch(e=>{});
+            }
           }
         }
       } catch (e) {}
@@ -1076,6 +1105,20 @@
       
       const prcEl = document.getElementById('pending-ref-comm-display');
       if (prcEl) prcEl.innerText = pendingRefComm.toFixed(4);
+
+      const refListBox = document.getElementById('my-referrals-list');
+      if (refListBox) {
+         if (myReferrals.length === 0) {
+             refListBox.innerHTML = `<div style="text-align:center;color:#94a3b8;">No friends invited yet.</div>`;
+         } else {
+             refListBox.innerHTML = myReferrals.map(r => `
+               <div style="display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px solid #1e293b;">
+                 <span>${r.name} <span style="font-size:9px;color:${r.status.includes('Verified') ? '#22c55e' : '#f59e0b'};">(${r.status})</span></span>
+                 <strong style="color:var(--gb);">+${(r.profit || 0).toFixed(2)} ${config.coinSym}</strong>
+               </div>
+             `).join('');
+         }
+      }
       
       renderDailyLogin();
 
@@ -1149,7 +1192,7 @@
       SoundFX.collect();
       await savePlayerToCloud();
 
-      const minReqHold = LEVELS_DATA[1].reqHold; // Level 2 reqHold
+      const minReqHold = LEVELS_DATA[1].reqHold; 
       if (db && invitedById && linkedWalletAddr && walletHold >= minReqHold) {
         const comm = +(pending * ((Number(config.refClaimPercent) || 5) / 100)).toFixed(4);
         if (comm > 0) {
@@ -1158,9 +1201,16 @@
             const invSnap = await invRef.get();
             if (invSnap.exists && invSnap.data().deviceHash !== deviceFingerprint) {
               const idata = invSnap.data();
+              const updRefs = (idata.referrals || []).map(r => {
+                  if (String(r.id) === CURRENT_UID) {
+                      return { ...r, profit: (r.profit || 0) + comm };
+                  }
+                  return r;
+              });
               await invRef.update({
                 pendingRefComm: (idata.pendingRefComm || 0) + comm,
-                refCommissionEarned: (idata.refCommissionEarned || 0) + comm
+                refCommissionEarned: (idata.refCommissionEarned || 0) + comm,
+                referrals: updRefs
               });
             }
           } catch (err) {}
@@ -1442,86 +1492,4 @@
     document.querySelectorAll('.btn-stonfi-buy').forEach(b => b.addEventListener('click', openStonfiSwap));
     document.getElementById('btn-connect-wallet').addEventListener('click', connectTonWallet);
     document.getElementById('btn-sync-hold').addEventListener('click', () => syncOnChainJettonHold(true));
-    document.getElementById('btn-disconnect-wallet').addEventListener('click', disconnectTonWallet);
-    document.getElementById('wd-input-amt').addEventListener('input', updateWdCalculation);
-    document.getElementById('btn-request-wd').addEventListener('click', requestWithdrawal);
-
-    document.getElementById('btn-watch-ad').addEventListener('click', e => {
-      if (!isHumanClick(e)) return;
-      if (adsWatched >= config.maxAdsPerDay) return showToast("⚠️ Daily ad limit reached!", "#ef4444");
-      showRealTelegramAd(() => {
-        adsWatched++;
-        minedInApp += Number(config.adReward) || 5;
-        localStorage.setItem('vksec_ads', adsWatched);
-        savePlayerToCloud(); SoundFX.collect(); applyUI();
-        showToast(`📺 +${config.adReward} ${config.coinSym}!`);
-      });
-    });
-
-    let chV = {1:false, 2:false};
-    document.getElementById('btn-open-ch1').addEventListener('click', () => { chV[1] = true; window.open(config.channel1, '_blank'); });
-    document.getElementById('btn-open-ch2').addEventListener('click', () => { chV[2] = true; window.open(config.channel2, '_blank'); });
-    [1, 2].forEach(n => document.getElementById(`ch-task-${n}-btn`).addEventListener('click', e => {
-      if (!isHumanClick(e)) return;
-      if (localStorage.getItem('vksec_task'+n)) return showToast("Already claimed!", "#f59e0b");
-      if (!chV[n]) return showToast("❌ Open channel & subscribe first!", "#ef4444");
-      minedInApp += Number(config.taskReward) || 50;
-      localStorage.setItem('vksec_task'+n, '1');
-      savePlayerToCloud(); SoundFX.buySuccess(); applyUI();
-      showToast(`🎉 +${config.taskReward} ${config.coinSym}!`);
-    }));
-
-    document.getElementById('tier-btn-1').addEventListener('click', () => { currentLevelPage = 1; setActiveTierBtn(1); renderLevelsGrid(); });
-    document.getElementById('tier-btn-2').addEventListener('click', () => { currentLevelPage = 4; setActiveTierBtn(2); renderLevelsGrid(); });
-    document.getElementById('tier-btn-3').addEventListener('click', () => { currentLevelPage = 8; setActiveTierBtn(3); renderLevelsGrid(); });
-    document.getElementById('btn-lvl-prev').addEventListener('click', () => { currentLevelPage = Math.max(1, currentLevelPage - 1); renderLevelsGrid(); });
-    document.getElementById('btn-lvl-next').addEventListener('click', () => { currentLevelPage = Math.min(10, currentLevelPage + 1); renderLevelsGrid(); });
-
-    document.getElementById('btn-copy-ref').addEventListener('click', () => { navigator.clipboard.writeText(document.getElementById('ref-link-box').value); showToast("📋 Link Copied!"); });
-    document.getElementById('btn-share-ref').addEventListener('click', () => window.open(`https://t.me/share/url?url=${encodeURIComponent(document.getElementById('ref-link-box').value)}`, '_blank'));
-    document.querySelectorAll('.nav-item').forEach(i => i.addEventListener('click', () => switchTab(i.getAttribute('data-tab'))));
-    document.getElementById('btn-close-admin').addEventListener('click', () => switchTab('mine'));
-
-    ['users', 'wd', 'set'].forEach(t => document.getElementById('atab-btn-' + t).addEventListener('click', () => {
-      ['users', 'wd', 'set'].forEach(x => { document.getElementById('adm-sub-' + x).style.display = x === t ? 'block' : 'none'; document.getElementById('atab-btn-' + x).classList.toggle('active', x === t); });
-    }));
-    document.getElementById('adm-user-search').addEventListener('input', renderAdminUsersList);
-    document.querySelectorAll('.adm-filter-btn').forEach(b => b.addEventListener('click', () => { currentUserFilter = b.getAttribute('data-filter'); renderAdminUsersList(); }));
-
-    document.getElementById('btn-save-admin').addEventListener('click', async () => {
-      config.brandTitle = document.getElementById('adm-title').value.trim() || "$VIKING MINER";
-      config.coinSym = document.getElementById('adm-sym').value.trim() || "$VIKING";
-      config.lvl1PerDay = parseFloat(document.getElementById('adm-lvl1-day').value) || 250;
-      config.adReward = parseFloat(document.getElementById('adm-ad-rew').value) || 5;
-      config.maxAdsPerDay = parseInt(document.getElementById('adm-ad-max').value) || 10;
-      config.taskReward = parseFloat(document.getElementById('adm-task-rew').value) || 50;
-      config.refReward = parseFloat(document.getElementById('adm-ref-rew').value) || 100;
-      config.refClaimPercent = parseFloat(document.getElementById('adm-ref-pct').value) || 5;
-      config.refMinHold = parseFloat(document.getElementById('adm-ref-minhold').value) || 100;
-      config.minWithdraw = parseInt(document.getElementById('adm-minwd').value) || 5000;
-      config.holdPercentReq = parseInt(document.getElementById('adm-holdpct').value) || 25;
-      config.withdrawFeePercent = parseFloat(document.getElementById('adm-wdfee-pct').value) || 5;
-      config.payoutWallet = document.getElementById('adm-payout-wallet').value.trim();
-      config.adsgramBlockId = document.getElementById('adm-adsgram-id').value.trim();
-      config.botToken = document.getElementById('adm-bottoken').value.trim();
-      config.payoutChannel = document.getElementById('adm-payout-ch').value.trim() || "@YGRAM1";
-      config.adminChatId = document.getElementById('adm-admin-chat').value.trim();
-      config.channel1 = document.getElementById('adm-ch1').value.trim() || "https://t.me/YGRAM1";
-      config.channel2 = document.getElementById('adm-ch2').value.trim() || "https://t.me/telegram";
-      config.botUsername = document.getElementById('adm-botuser').value.trim() || "VIKINGMINER_BOT";
-      config.adminPin = document.getElementById('adm-pin').value.trim() || "202020";
-
-      const mb = parseFloat(document.getElementById('adm-minebal').value), hb = parseFloat(document.getElementById('adm-holdbal').value);
-      if (!isNaN(mb)) minedInApp = mb; if (!isNaN(hb)) walletHold = hb;
-
-      rebuildLevelsTable();
-      await savePlayerToCloud();
-      if (db) await db.collection("settings").doc("global").set(config, { merge: true });
-      SoundFX.buySuccess(); applyUI(); showToast("☁️ تم حفظ الإعدادات وتطبيقها!");
-    });
-
-    applyUI(); initCloudSync(); setInterval(updateLiveMining, 200); updateLiveMining();
-  })();
-  </script>
-</body>
-</html>
+    document.getElementById('btn-disconnect-wallet').add
