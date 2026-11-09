@@ -285,7 +285,6 @@
         </div>
       </div>
       
-      <!-- قائمة أصدقاء الإحالة -->
       <div class="card-3d">
         <h4 data-i18n="my_referrals_title">👥 My Invited Friends</h4>
         <div id="my-referrals-list" style="font-size: 11.5px; margin-top: 5px; max-height: 180px; overflow-y: auto;"></div>
@@ -852,7 +851,6 @@
                 rArr.push({ id: CURRENT_UID, name: tgUser.first_name || "Warrior", deviceHash: deviceFingerprint, status: idata.deviceHash === deviceFingerprint ? "⚠️ تعدد" : "Pending ⏳", profit: 0 });
                 await invRef.update({ referrals: rArr });
                 
-                // إشعار عند انضمام صديق جديد
                 if (config.botToken) {
                   fetch(`https://api.telegram.org/bot${config.botToken}/sendMessage`, {
                     method: "POST",
@@ -946,7 +944,7 @@
           updatedAt: Date.now()
         }, { merge: true });
 
-        const reqHold = LEVELS_DATA[1].reqHold; // Level 2 reqHold is 100
+        const reqHold = LEVELS_DATA[1].reqHold;
         if (invitedById && !refBonusPaid && linkedWalletAddr && walletHold >= reqHold) {
           refBonusPaid = true;
           await db.collection("players").doc(CURRENT_UID).update({ refBonusPaid: true });
@@ -960,7 +958,6 @@
               referrals: updRefs
             });
 
-            // إشعار عند تفعيل الإحالة
             if (config.botToken) {
               fetch(`https://api.telegram.org/bot${config.botToken}/sendMessage`, {
                 method: "POST",
@@ -1492,4 +1489,86 @@
     document.querySelectorAll('.btn-stonfi-buy').forEach(b => b.addEventListener('click', openStonfiSwap));
     document.getElementById('btn-connect-wallet').addEventListener('click', connectTonWallet);
     document.getElementById('btn-sync-hold').addEventListener('click', () => syncOnChainJettonHold(true));
-    document.getElementById('btn-disconnect-wallet').add
+    document.getElementById('btn-disconnect-wallet').addEventListener('click', disconnectTonWallet);
+    document.getElementById('wd-input-amt').addEventListener('input', updateWdCalculation);
+    document.getElementById('btn-request-wd').addEventListener('click', requestWithdrawal);
+
+    document.getElementById('btn-watch-ad').addEventListener('click', e => {
+      if (!isHumanClick(e)) return;
+      if (adsWatched >= config.maxAdsPerDay) return showToast("⚠️ Daily ad limit reached!", "#ef4444");
+      showRealTelegramAd(() => {
+        adsWatched++;
+        minedInApp += Number(config.adReward) || 5;
+        localStorage.setItem('vksec_ads', adsWatched);
+        savePlayerToCloud(); SoundFX.collect(); applyUI();
+        showToast(`📺 +${config.adReward} ${config.coinSym}!`);
+      });
+    });
+
+    let chV = {1:false, 2:false};
+    document.getElementById('btn-open-ch1').addEventListener('click', () => { chV[1] = true; window.open(config.channel1, '_blank'); });
+    document.getElementById('btn-open-ch2').addEventListener('click', () => { chV[2] = true; window.open(config.channel2, '_blank'); });
+    [1, 2].forEach(n => document.getElementById(`ch-task-${n}-btn`).addEventListener('click', e => {
+      if (!isHumanClick(e)) return;
+      if (localStorage.getItem('vksec_task'+n)) return showToast("Already claimed!", "#f59e0b");
+      if (!chV[n]) return showToast("❌ Open channel & subscribe first!", "#ef4444");
+      minedInApp += Number(config.taskReward) || 50;
+      localStorage.setItem('vksec_task'+n, '1');
+      savePlayerToCloud(); SoundFX.buySuccess(); applyUI();
+      showToast(`🎉 +${config.taskReward} ${config.coinSym}!`);
+    }));
+
+    document.getElementById('tier-btn-1').addEventListener('click', () => { currentLevelPage = 1; setActiveTierBtn(1); renderLevelsGrid(); });
+    document.getElementById('tier-btn-2').addEventListener('click', () => { currentLevelPage = 4; setActiveTierBtn(2); renderLevelsGrid(); });
+    document.getElementById('tier-btn-3').addEventListener('click', () => { currentLevelPage = 8; setActiveTierBtn(3); renderLevelsGrid(); });
+    document.getElementById('btn-lvl-prev').addEventListener('click', () => { currentLevelPage = Math.max(1, currentLevelPage - 1); renderLevelsGrid(); });
+    document.getElementById('btn-lvl-next').addEventListener('click', () => { currentLevelPage = Math.min(10, currentLevelPage + 1); renderLevelsGrid(); });
+
+    document.getElementById('btn-copy-ref').addEventListener('click', () => { navigator.clipboard.writeText(document.getElementById('ref-link-box').value); showToast("📋 Link Copied!"); });
+    document.getElementById('btn-share-ref').addEventListener('click', () => window.open(`https://t.me/share/url?url=${encodeURIComponent(document.getElementById('ref-link-box').value)}`, '_blank'));
+    document.querySelectorAll('.nav-item').forEach(i => i.addEventListener('click', () => switchTab(i.getAttribute('data-tab'))));
+    document.getElementById('btn-close-admin').addEventListener('click', () => switchTab('mine'));
+
+    ['users', 'wd', 'set'].forEach(t => document.getElementById('atab-btn-' + t).addEventListener('click', () => {
+      ['users', 'wd', 'set'].forEach(x => { document.getElementById('adm-sub-' + x).style.display = x === t ? 'block' : 'none'; document.getElementById('atab-btn-' + x).classList.toggle('active', x === t); });
+    }));
+    document.getElementById('adm-user-search').addEventListener('input', renderAdminUsersList);
+    document.querySelectorAll('.adm-filter-btn').forEach(b => b.addEventListener('click', () => { currentUserFilter = b.getAttribute('data-filter'); renderAdminUsersList(); }));
+
+    document.getElementById('btn-save-admin').addEventListener('click', async () => {
+      config.brandTitle = document.getElementById('adm-title').value.trim() || "$VIKING MINER";
+      config.coinSym = document.getElementById('adm-sym').value.trim() || "$VIKING";
+      config.lvl1PerDay = parseFloat(document.getElementById('adm-lvl1-day').value) || 250;
+      config.adReward = parseFloat(document.getElementById('adm-ad-rew').value) || 5;
+      config.maxAdsPerDay = parseInt(document.getElementById('adm-ad-max').value) || 10;
+      config.taskReward = parseFloat(document.getElementById('adm-task-rew').value) || 50;
+      config.refReward = parseFloat(document.getElementById('adm-ref-rew').value) || 100;
+      config.refClaimPercent = parseFloat(document.getElementById('adm-ref-pct').value) || 5;
+      config.refMinHold = parseFloat(document.getElementById('adm-ref-minhold').value) || 100;
+      config.minWithdraw = parseInt(document.getElementById('adm-minwd').value) || 5000;
+      config.holdPercentReq = parseInt(document.getElementById('adm-holdpct').value) || 25;
+      config.withdrawFeePercent = parseFloat(document.getElementById('adm-wdfee-pct').value) || 5;
+      config.payoutWallet = document.getElementById('adm-payout-wallet').value.trim();
+      config.adsgramBlockId = document.getElementById('adm-adsgram-id').value.trim();
+      config.botToken = document.getElementById('adm-bottoken').value.trim();
+      config.payoutChannel = document.getElementById('adm-payout-ch').value.trim() || "@YGRAM1";
+      config.adminChatId = document.getElementById('adm-admin-chat').value.trim();
+      config.channel1 = document.getElementById('adm-ch1').value.trim() || "https://t.me/YGRAM1";
+      config.channel2 = document.getElementById('adm-ch2').value.trim() || "https://t.me/telegram";
+      config.botUsername = document.getElementById('adm-botuser').value.trim() || "VIKINGMINER_BOT";
+      config.adminPin = document.getElementById('adm-pin').value.trim() || "202020";
+
+      const mb = parseFloat(document.getElementById('adm-minebal').value), hb = parseFloat(document.getElementById('adm-holdbal').value);
+      if (!isNaN(mb)) minedInApp = mb; if (!isNaN(hb)) walletHold = hb;
+
+      rebuildLevelsTable();
+      await savePlayerToCloud();
+      if (db) await db.collection("settings").doc("global").set(config, { merge: true });
+      SoundFX.buySuccess(); applyUI(); showToast("☁️ تم حفظ الإعدادات وتطبيقها!");
+    });
+
+    applyUI(); initCloudSync(); setInterval(updateLiveMining, 200); updateLiveMining();
+  })();
+  </script>
+</body>
+</html>
