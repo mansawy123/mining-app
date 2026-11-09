@@ -960,7 +960,7 @@
           updatedAt: Date.now()
         }, { merge: true });
 
-        const reqHold = LEVELS_DATA[1].reqHold; // Level 2 reqHold is 200
+        const reqHold = LEVELS_DATA[1].reqHold;
         if (invitedById && !refBonusPaid && linkedWalletAddr && walletHold >= reqHold) {
           refBonusPaid = true;
           await db.collection("players").doc(CURRENT_UID).update({ refBonusPaid: true });
@@ -1345,4 +1345,243 @@
           showToast("✅ تم تعديل الرصيد!");
         }
       }));
-      box.querySelectorAll('.adm-bn').forEach(b => b.addEventListener('click
+      box.querySelectorAll('.adm-bn').forEach(b => b.addEventListener('click', async () => {
+        const uid = b.getAttribute('data-id'), u = usersDB.find(x => String(x.id) === String(uid));
+        if (u && db) {
+          const newBanState = !u.banned;
+          await db.collection("players").doc(String(uid)).update({ banned: newBanState });
+          showToast(newBanState ? "🚫 تم حظر العضو!" : "✅ تم فك الحظر!");
+        }
+      }));
+    }
+
+    async function processPayout(w, isReject) {
+      if (!db || !w.docId) return;
+      if (isReject) {
+        await db.collection("withdrawals").doc(w.docId).update({ status: "Rejected ❌" });
+        const pRef = db.collection("players").doc(String(w.userId));
+        await pRef.update({ mined: firebase.firestore.FieldValue.increment(w.amt) });
+        SoundFX.error(); showToast("❌ تم رفض السحب وإرجاع الرصيد للمستخدم.");
+      } else {
+        const txUrl = `https://tonviewer.com/${w.walletAddr}?jetton=${OFFICIAL_JETTON}`;
+        await db.collection("withdrawals").doc(w.docId).update({ status: "Paid ✅", txLink: txUrl });
+        
+        if (config.botToken && config.payoutChannel) {
+          const proofText = `✅ <b>إثبات سحب ناجح رقم #${w.wdNum}</b>\n\n👤 <b>اللاعب:</b> ${w.userName}\n💰 <b>المبلغ:</b> ${w.amt.toLocaleString()} ${config.coinSym}\n💎 <b>الصافي:</b> ${w.net.toLocaleString()} ${config.coinSym}\n👛 <b>المحفظة:</b> <code>${w.walletAddr.slice(0,6)}...${w.walletAddr.slice(-6)}</code>`;
+          try {
+            await fetch(`https://api.telegram.org/bot${config.botToken}/sendMessage`, {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({
+                chat_id: config.payoutChannel,
+                text: proofText,
+                parse_mode: "HTML",
+                reply_markup: { inline_keyboard: [[{ text: `🔗 رابط المعاملة`, url: txUrl }]] }
+              })
+            });
+          } catch(e) {}
+        }
+        SoundFX.buySuccess(); showToast(`✅ تم تأكيد الدفع #${w.wdNum} ونشر الإثبات!`);
+      }
+      renderAdminWithdrawals();
+    }
+
+    function renderAdminWithdrawals() {
+      const box = document.getElementById('adm-wd-requests-list');
+      if (!allWithdrawalsDB.length) { box.innerHTML = "لا توجد طلبات سحب."; return; }
+      allWithdrawalsDB.sort((a, b) => (b.wdNum || 0) - (a.wdNum || 0));
+      box.innerHTML = allWithdrawalsDB.map(w => `
+        <div class="user-row-card">
+          <div style="display:flex;justify-content:space-between;margin-bottom:4px;">
+            <strong>🔢 سحب #${w.wdNum || 1} — ${w.userName}</strong>
+            <span style="color:${w.status.includes('Paid') ? '#22c55e' : (w.status.includes('Rejected') ? '#ef4444' : 'var(--gb)')};font-weight:800;">${w.status}</span>
+          </div>
+          <div style="font-size:10px;color:var(--m);word-break:break-all;direction:ltr;margin-bottom:6px;">${w.walletAddr}</div>
+          <div style="font-size:11.5px;margin-bottom:8px;">المبلغ: ${w.amt} · <strong>الصافي: <span style="color:#22c55e;">${w.net} ${config.coinSym}</span></strong></div>
+          ${w.status.includes('Pending') ? `
+          <div class="grid-3">
+            <button class="btn-3d-gold adm-wd-pay" data-id="${w.docId}" style="padding:7px;font-size:10px;">💸 دفع</button>
+            <button class="btn-3d-dark adm-wd-ok" data-id="${w.docId}" style="padding:7px;font-size:10px;color:#22c55e;">✅ تأكيد</button>
+            <button class="btn-3d-danger adm-wd-no" data-id="${w.docId}" style="padding:7px;font-size:10px;">❌ رفض</button>
+          </div>` : ''}
+        </div>`).join('');
+
+      box.querySelectorAll('.adm-wd-pay').forEach(b => b.addEventListener('click', () => {
+        const item = allWithdrawalsDB.find(x => x.docId === b.getAttribute('data-id'));
+        if (item) {
+          const tonLink = `ton://transfer/${item.walletAddr}?jetton=${OFFICIAL_JETTON}&amount=${Math.floor(item.net * 1e9)}`;
+          window.open(tonLink, '_blank');
+        }
+      }));
+      box.querySelectorAll('.adm-wd-ok').forEach(b => b.addEventListener('click', () => {
+        const item = allWithdrawalsDB.find(x => x.docId === b.getAttribute('data-id'));
+        if (item) processPayout(item, false);
+      }));
+      box.querySelectorAll('.adm-wd-no').forEach(b => b.addEventListener('click', () => {
+        const item = allWithdrawalsDB.find(x => x.docId === b.getAttribute('data-id'));
+        if (item) processPayout(item, true);
+      }));
+    }
+
+    function openOwnerDashboard() {
+      const pin = prompt("🛡️ الرقم السري لمالك البوت:");
+      if (pin === config.adminPin || pin === "202020") {
+        document.getElementById('adm-title').value = config.brandTitle;
+        document.getElementById('adm-sym').value = config.coinSym;
+        document.getElementById('adm-lvl1-day').value = config.lvl1PerDay;
+        document.getElementById('adm-lvl100-day').value = LEVELS_DATA[99].perDay;
+        document.getElementById('adm-ad-rew').value = config.adReward;
+        document.getElementById('adm-ad-max').value = config.maxAdsPerDay;
+        document.getElementById('adm-task-rew').value = config.taskReward;
+        document.getElementById('adm-ref-pct').value = config.refClaimPercent;
+        document.getElementById('adm-ref-minhold').value = config.refMinHold;
+        document.getElementById('adm-minwd').value = config.minWithdraw;
+        document.getElementById('adm-holdpct').value = config.holdPercentReq;
+        document.getElementById('adm-wdfee-pct').value = config.withdrawFeePercent;
+        document.getElementById('adm-payout-wallet').value = config.payoutWallet || "";
+        document.getElementById('adm-adsgram-id').value = config.adsgramBlockId || "";
+        document.getElementById('adm-bottoken').value = config.botToken || "";
+        document.getElementById('adm-payout-ch').value = config.payoutChannel || "@YGRAM1";
+        document.getElementById('adm-admin-chat').value = config.adminChatId || "";
+        document.getElementById('adm-ch1').value = config.channel1;
+        document.getElementById('adm-ch2').value = config.channel2;
+        document.getElementById('adm-minebal').value = Math.floor(minedInApp);
+        document.getElementById('adm-holdbal').value = Math.floor(walletHold);
+        document.getElementById('adm-botuser').value = config.botUsername;
+        document.getElementById('adm-pin').value = config.adminPin;
+
+        if (db) {
+          db.collection("players").onSnapshot(s => { usersDB = []; s.forEach(d => usersDB.push(d.data())); renderAdminUsersList(); });
+          db.collection("withdrawals").onSnapshot(s => {
+            allWithdrawalsDB = []; s.forEach(d => allWithdrawalsDB.push(Object.assign({ docId: d.id }, d.data())));
+            renderAdminWithdrawals();
+          });
+        }
+        switchTab('admin');
+      }
+    }
+
+    function switchTab(id) {
+      SoundFX.click();
+      document.getElementById('lang-dropdown').classList.remove('show');
+      document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+      document.getElementById('page-' + id)?.classList.add('active');
+      document.querySelectorAll('.nav-item').forEach(n => n.classList.toggle('active', n.getAttribute('data-tab') === id));
+    }
+
+    function setActiveTierBtn(activeNum) {
+      [1, 2, 3].forEach(n => document.getElementById('tier-btn-' + n).classList.toggle('tier-active', n === activeNum));
+    }
+
+    document.getElementById('sound-toggle-btn').addEventListener('click', () => {
+      soundEnabled = !soundEnabled;
+      document.getElementById('sound-toggle-btn').style.opacity = soundEnabled ? "1" : "0.45";
+    });
+    document.getElementById('lang-menu-btn').addEventListener('click', e => { e.stopPropagation(); document.getElementById('lang-dropdown').classList.toggle('show'); });
+    document.querySelectorAll('.lang-opt').forEach(o => o.addEventListener('click', e => { e.stopPropagation(); currentLang = o.getAttribute('data-lang'); localStorage.setItem('vk_lang', currentLang); document.getElementById('lang-dropdown').classList.remove('show'); applyUI(); }));
+    document.addEventListener('click', () => document.getElementById('lang-dropdown').classList.remove('show'));
+    document.getElementById('top-wallet-shortcut').addEventListener('click', () => switchTab('profile'));
+
+    let taps = 0, tapT = null;
+    document.getElementById('ui-brand-title').addEventListener('click', () => { taps++; clearTimeout(tapT); if (taps >= 5) { taps = 0; openOwnerDashboard(); } else tapT = setTimeout(() => taps = 0, 1500); });
+
+    document.getElementById('coin-3d-trigger').addEventListener('click', collectMining);
+    document.getElementById('btn-collect-main').addEventListener('click', collectMining);
+    document.getElementById('btn-goto-boost').addEventListener('click', () => switchTab('boost'));
+    document.getElementById('btn-collect-ref').addEventListener('click', collectReferralProfits);
+    document.getElementById('btn-claim-daily').addEventListener('click', claimDailyLogin);
+
+    document.getElementById('btn-turbo').addEventListener('click', e => {
+      if (!isHumanClick(e)) return;
+      showRealTelegramAd(() => {
+        turboUntil = Date.now() + 300000;
+        localStorage.setItem('vksec_turbo', turboUntil);
+        SoundFX.buySuccess(); applyUI(); showToast("⚡ Turbo x2 Activated!");
+      });
+    });
+
+    document.querySelectorAll('.btn-stonfi-buy').forEach(b => b.addEventListener('click', openStonfiSwap));
+    document.getElementById('btn-connect-wallet').addEventListener('click', connectTonWallet);
+    document.getElementById('btn-sync-hold').addEventListener('click', () => syncOnChainJettonHold(true));
+    document.getElementById('btn-disconnect-wallet').addEventListener('click', disconnectTonWallet);
+    document.getElementById('wd-input-amt').addEventListener('input', updateWdCalculation);
+    document.getElementById('btn-request-wd').addEventListener('click', requestWithdrawal);
+
+    document.getElementById('btn-watch-ad').addEventListener('click', e => {
+      if (!isHumanClick(e)) return;
+      if (adsWatched >= config.maxAdsPerDay) return showToast("⚠️ Daily ad limit reached!", "#ef4444");
+      showRealTelegramAd(() => {
+        adsWatched++;
+        minedInApp += Number(config.adReward) || 5;
+        localStorage.setItem('vksec_ads', adsWatched);
+        savePlayerToCloud(); SoundFX.collect(); applyUI();
+        showToast(`📺 +${config.adReward} ${config.coinSym}!`);
+      });
+    });
+
+    let chV = {1:false, 2:false};
+    document.getElementById('btn-open-ch1').addEventListener('click', () => { chV[1] = true; window.open(config.channel1, '_blank'); });
+    document.getElementById('btn-open-ch2').addEventListener('click', () => { chV[2] = true; window.open(config.channel2, '_blank'); });
+    [1, 2].forEach(n => document.getElementById(`ch-task-${n}-btn`).addEventListener('click', e => {
+      if (!isHumanClick(e)) return;
+      if (localStorage.getItem('vksec_task'+n)) return showToast("Already claimed!", "#f59e0b");
+      if (!chV[n]) return showToast("❌ Open channel & subscribe first!", "#ef4444");
+      minedInApp += Number(config.taskReward) || 50;
+      localStorage.setItem('vksec_task'+n, '1');
+      savePlayerToCloud(); SoundFX.buySuccess(); applyUI();
+      showToast(`🎉 +${config.taskReward} ${config.coinSym}!`);
+    }));
+
+    document.getElementById('tier-btn-1').addEventListener('click', () => { currentLevelPage = 1; setActiveTierBtn(1); renderLevelsGrid(); });
+    document.getElementById('tier-btn-2').addEventListener('click', () => { currentLevelPage = 4; setActiveTierBtn(2); renderLevelsGrid(); });
+    document.getElementById('tier-btn-3').addEventListener('click', () => { currentLevelPage = 8; setActiveTierBtn(3); renderLevelsGrid(); });
+    document.getElementById('btn-lvl-prev').addEventListener('click', () => { currentLevelPage = Math.max(1, currentLevelPage - 1); renderLevelsGrid(); });
+    document.getElementById('btn-lvl-next').addEventListener('click', () => { currentLevelPage = Math.min(10, currentLevelPage + 1); renderLevelsGrid(); });
+
+    document.getElementById('btn-copy-ref').addEventListener('click', () => { navigator.clipboard.writeText(document.getElementById('ref-link-box').value); showToast("📋 Link Copied!"); });
+    document.getElementById('btn-share-ref').addEventListener('click', () => window.open(`https://t.me/share/url?url=${encodeURIComponent(document.getElementById('ref-link-box').value)}`, '_blank'));
+    document.querySelectorAll('.nav-item').forEach(i => i.addEventListener('click', () => switchTab(i.getAttribute('data-tab'))));
+    document.getElementById('btn-close-admin').addEventListener('click', () => switchTab('mine'));
+
+    ['users', 'wd', 'set'].forEach(t => document.getElementById('atab-btn-' + t).addEventListener('click', () => {
+      ['users', 'wd', 'set'].forEach(x => { document.getElementById('adm-sub-' + x).style.display = x === t ? 'block' : 'none'; document.getElementById('atab-btn-' + x).classList.toggle('active', x === t); });
+    }));
+    document.getElementById('adm-user-search').addEventListener('input', renderAdminUsersList);
+    document.querySelectorAll('.adm-filter-btn').forEach(b => b.addEventListener('click', () => { currentUserFilter = b.getAttribute('data-filter'); renderAdminUsersList(); }));
+
+    document.getElementById('btn-save-admin').addEventListener('click', async () => {
+      config.brandTitle = document.getElementById('adm-title').value.trim() || "$VIKING MINER";
+      config.coinSym = document.getElementById('adm-sym').value.trim() || "$VIKING";
+      config.lvl1PerDay = parseFloat(document.getElementById('adm-lvl1-day').value) || 250;
+      config.adReward = parseFloat(document.getElementById('adm-ad-rew').value) || 5;
+      config.maxAdsPerDay = parseInt(document.getElementById('adm-ad-max').value) || 10;
+      config.taskReward = parseFloat(document.getElementById('adm-task-rew').value) || 50;
+      config.refClaimPercent = parseFloat(document.getElementById('adm-ref-pct').value) || 5;
+      config.refMinHold = parseFloat(document.getElementById('adm-ref-minhold').value) || 200;
+      config.minWithdraw = parseInt(document.getElementById('adm-minwd').value) || 5000;
+      config.holdPercentReq = parseInt(document.getElementById('adm-holdpct').value) || 25;
+      config.withdrawFeePercent = parseFloat(document.getElementById('adm-wdfee-pct').value) || 5;
+      config.payoutWallet = document.getElementById('adm-payout-wallet').value.trim();
+      config.adsgramBlockId = document.getElementById('adm-adsgram-id').value.trim();
+      config.botToken = document.getElementById('adm-bottoken').value.trim();
+      config.payoutChannel = document.getElementById('adm-payout-ch').value.trim() || "@YGRAM1";
+      config.adminChatId = document.getElementById('adm-admin-chat').value.trim();
+      config.channel1 = document.getElementById('adm-ch1').value.trim() || "https://t.me/YGRAM1";
+      config.channel2 = document.getElementById('adm-ch2').value.trim() || "https://t.me/telegram";
+      config.botUsername = document.getElementById('adm-botuser').value.trim() || "VIKINGMINER_BOT";
+      config.adminPin = document.getElementById('adm-pin').value.trim() || "202020";
+
+      const mb = parseFloat(document.getElementById('adm-minebal').value), hb = parseFloat(document.getElementById('adm-holdbal').value);
+      if (!isNaN(mb)) minedInApp = mb; if (!isNaN(hb)) walletHold = hb;
+
+      rebuildLevelsTable();
+      await savePlayerToCloud();
+      if (db) await db.collection("settings").doc("global").set(config, { merge: true });
+      SoundFX.buySuccess(); applyUI(); showToast("☁️ تم حفظ الإعدادات وتطبيقها!");
+    });
+
+    applyUI(); initCloudSync(); setInterval(updateLiveMining, 200); updateLiveMining();
+  })();
+  </script>
+</body>
+</html>
