@@ -68,13 +68,19 @@
     #boot-loader{position:fixed;inset:0;background:#05070b;z-index:99999;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:24px;text-align:center;overflow:hidden}
     #banned-screen{position:fixed;inset:0;background:#05070b;z-index:99999;display:none;flex-direction:column;align-items:center;justify-content:center;padding:24px;text-align:center}
     #toast{position:fixed;top:14px;left:50%;transform:translateX(-50%);background:#d97706;color:#fff;padding:8px 16px;border-radius:18px;font-size:12px;font-weight:800;display:none;z-index:100000;border:1px solid var(--gb);text-align:center;min-width:240px}
+    /* Daily Login Styles */
+    .daily-grid{display:flex;justify-content:space-between;gap:4px;margin-bottom:8px;}
+    .daily-box{flex:1;background:#0b0f17;border:1px solid #334155;border-radius:8px;padding:6px 2px;text-align:center;font-size:9px;color:#94a3b8;position:relative;}
+    .daily-box.active{border-color:var(--gb);background:rgba(245,158,11,0.15);color:var(--gb);}
+    .daily-box.claimed{background:#10b981;color:#fff;border-color:#10b981;}
+    .daily-box .day-num{font-weight:900;font-size:11px;margin-bottom:2px;display:block;}
   </style>
 </head>
 <body oncontextmenu="return false;">
 
   <div id="boot-loader">
-    <img src="viking-boot.jpg" alt="Viking" style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover;opacity:0.3;" onerror="this.style.display='none'">
-    <div style="position:absolute;inset:0;background:linear-gradient(180deg,rgba(5,7,11,0.2),rgba(5,7,11,0.95));"></div>
+    <img src="viking-boot.jpg" alt="Viking" style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover;opacity:0.15;filter:blur(4px);" onerror="this.style.display='none'">
+    <div style="position:absolute;inset:0;background:radial-gradient(circle, rgba(5,7,11,0.4) 0%, rgba(5,7,11,0.95) 100%);"></div>
     <div style="position:relative;z-index:2;width:80%;max-width:300px;">
       <div style="margin-bottom:15px;">
         <svg width="64" height="64" viewBox="0 0 24 24" fill="none"><path d="M12 2L4 5v6.09c0 5.05 3.41 9.76 8 10.91 4.59-1.15 8-5.86 8-10.91V5l-8-3z" fill="#f59e0b" stroke="#fde047" stroke-width="1.5"/></svg>
@@ -185,6 +191,17 @@
     </div>
 
     <div id="page-tasks" class="page">
+      <!-- Daily Login Task -->
+      <div class="card-3d">
+        <div style="display:flex;justify-content:space-between;margin-bottom:8px;">
+          <h4 data-i18n="daily_login_title">🎁 Daily Login (7 Days)</h4>
+        </div>
+        <div class="daily-grid" id="daily-streak-container">
+          <!-- JS will fill this -->
+        </div>
+        <button class="btn-3d-gold" id="btn-claim-daily" data-i18n="claim_daily_btn">Claim Daily Reward</button>
+      </div>
+
       <div class="card-3d">
         <h4 data-i18n="watch_ads_title">📺 Watch Telegram Video Ads</h4>
         <p style="font-size:12px;color:var(--gb);margin:4px 0 8px;">+<span id="ui-ad-rew">5</span> <span class="coin-sym">$VIKING</span> · <span id="ads-watched-txt">0/10</span></p>
@@ -246,9 +263,9 @@
 
     <div id="page-friends" class="page">
       <div class="card-3d">
-        <h3 style="color:var(--gb);margin-bottom:6px;" data-i18n="ref_rule_title">⚠️ Referral System (+100 + 5% Mining)</h3>
+        <h3 style="color:var(--gb);margin-bottom:6px;" data-i18n="ref_rule_title">⚠️ Referral System</h3>
         <p style="font-size:11.5px;line-height:1.6;color:#e2e8f0;" data-i18n="ref_rule_desc">
-          1️⃣ Activation: Referral activates when your friend links their TON Wallet and holds 100+ coins from STON.fi (You earn +100 instant bonus).<br>
+          1️⃣ Activation: Referral activates when your friend reaches Level 2 (holds 100+ coins from STON.fi). You earn +100 instant bonus.<br>
           2️⃣ 5% Mining Bonus: Every time your active friend collects their 24h mining, you automatically receive 5% of their mined coins!
         </p>
       </div>
@@ -265,9 +282,9 @@
         </div>
       </div>
       <div class="card-3d">
-        <h4 style="margin-bottom:4px;">أرباح الإحالات المعلقة</h4>
+        <h4 style="margin-bottom:4px;" data-i18n="pending_ref_title">Pending Referral Profits</h4>
         <div style="font-size:24px;font-weight:900;color:var(--gb);margin-bottom:8px;" id="pending-ref-comm-display">0</div>
-        <button class="btn-3d-gold" id="btn-collect-ref">💰 جمع أرباح الإحالات</button>
+        <button class="btn-3d-gold" id="btn-collect-ref">💰 <span data-i18n="collect_ref_btn">Collect Referral Profits</span></button>
       </div>
     </div>
 
@@ -378,7 +395,7 @@
           <div class="grid-3">
             <div><label>هدية الإحالة:</label><input type="number" id="adm-ref-rew" class="input-3d"></div>
             <div><label>نسبة تعدين الإحالة%:</label><input type="number" id="adm-ref-pct" class="input-3d"></div>
-            <div><label>شرط تفعيل الإحالة:</label><input type="number" id="adm-ref-minhold" class="input-3d"></div>
+            <div><label>شرط تفعيل الإحالة (المستوى 2 = 100):</label><input type="number" id="adm-ref-minhold" class="input-3d"></div>
           </div>
           <div class="grid-3">
             <div><label>أقل سحب:</label><input type="number" id="adm-minwd" class="input-3d"></div>
@@ -528,9 +545,10 @@
         open_ch:"1. Open Channel", open_grp:"1. Open Group", verify_btn:"2. Verify ✅",
         wallet_hold:"Wallet Hold (Speed Source)", mined_app:"Mined in App",
         buy_upgrade_btn:"Buy Official Token on STON.fi to Upgrade Speed",
-        ref_rule_title:"⚠️ Referral System (+100 + 5% Mining)",
-        ref_rule_desc:"1️⃣ Activation: Referral activates when your friend connects their TON Wallet and holds 100+ coins from STON.fi (You earn +100 instant bonus).<br>2️⃣ 5% Mining Bonus: Every time your active friend collects their 24h mining, you automatically receive 5% of their mined amount!",
+        ref_rule_title:"⚠️ Referral System",
+        ref_rule_desc:"1️⃣ Activation: Referral activates when your friend reaches Level 2 (holds 100+ coins from STON.fi). You earn +100 instant bonus.<br>2️⃣ 5% Mining Bonus: Every time your active friend collects their 24h mining, you automatically receive 5% of their mined amount!",
         ref_pending:"Pending", ref_verified:"Active", ref_earned:"5% Earned", copy_btn:"Copy Link", share_btn:"Share",
+        pending_ref_title:"Pending Referral Profits", collect_ref_btn:"Collect Referral Profits",
         ton_wallet_title:"TON Blockchain Wallet", connect_wallet_btn:"Connect TON Wallet",
         sync_hold_btn:"Verify Wallet Hold", disconnect_wallet_btn:"Disconnect",
         hold_wallet_lbl:"Wallet Hold (On-Chain)", mine_wallet_lbl:"Mined Balance",
@@ -538,7 +556,9 @@
         hold_cond_lbl:"25% Hold Required:", your_hold_lbl:"Your Hold:", req_wd_btn:"Request Withdrawal",
         buy_hold_btn:"Buy on STON.fi to Unlock 25% Hold", wd_hist_title:"Withdrawal History",
         nav_mine:"Mine", nav_tasks:"Tasks", nav_boost:"Boost", nav_friends:"Friends", nav_profile:"Profile",
-        tank_full:"🛑 24h Tank Full (100%) - Collect Now!", tank_fill:"⏳ 24h Mining Tank:"
+        tank_full:"🛑 24h Tank Full (100%) - Collect Now!", tank_fill:"⏳ 24h Mining Tank:",
+        daily_login_title:"🎁 Daily Login (7 Days)", claim_daily_btn:"Claim Daily Reward",
+        day:"Day", claimed:"Claimed"
       },
       ar: {
         mining_rate:"سرعة التعدين", current_rank:"مستوى المحفظة", claimed_in_app:"رصيدك المجموع بالتطبيق",
@@ -549,9 +569,10 @@
         open_ch:"1. افتح القناة", open_grp:"1. افتح القناة", verify_btn:"2. تحقق ✅",
         wallet_hold:"رصيد المحفظة (مصدر السرعة)", mined_app:"رصيد البوت (للسحب)",
         buy_upgrade_btn:"اشترِ العملة الرسمية من STON.fi لرفع سرعتك",
-        ref_rule_title:"⚠️ نظام الإحالات (+100 عملة + 5% تعدين)",
-        ref_rule_desc:"1️⃣ التفعيل: تتفعل الإحالة عندما يربط صديقك محفظته ويشتري 100 عملة على الأقل من STON.fi (تربح +100 عملة فوراً).<br>2️⃣ ربح 5% مستمر: بعد تفعيل الإحالة، كلما قام صديقك بجمع التعدين (Collect) تحصل أنت تلقائياً على 5% من مبلغ تعدينه!",
+        ref_rule_title:"⚠️ نظام الإحالات",
+        ref_rule_desc:"1️⃣ التفعيل: تتفعل الإحالة عندما يصل صديقك للمستوى 2 (يحتفظ بـ 100 عملة في محفظته من STON.fi). تربح +100 عملة فوراً.<br>2️⃣ ربح 5% مستمر: بعد تفعيل الإحالة، كلما قام صديقك بجمع التعدين تحصل أنت تلقائياً على 5% من مبلغ تعدينه!",
         ref_pending:"معلق", ref_verified:"مفعل", ref_earned:"ربح 5%", copy_btn:"نسخ الرابط", share_btn:"مشاركة",
+        pending_ref_title:"أرباح الإحالات المعلقة", collect_ref_btn:"جمع أرباح الإحالات",
         ton_wallet_title:"محفظة شبكة TON", connect_wallet_btn:"ربط محفظة TON الآن",
         sync_hold_btn:"تحديث رصيد المحفظة", disconnect_wallet_btn:"إلغاء الربط",
         hold_wallet_lbl:"عملات المحفظة (Hold)", mine_wallet_lbl:"رصيد التعدين",
@@ -559,7 +580,9 @@
         hold_cond_lbl:"شرط 25% بالمحفظة:", your_hold_lbl:"رصيد محفظتك:", req_wd_btn:"طلب سحب الرصيد",
         buy_hold_btn:"اشترِ من STON.fi لتحقيق شرط الـ 25%", wd_hist_title:"سجل السحوبات",
         nav_mine:"التعدين", nav_tasks:"المهام", nav_boost:"السرعة", nav_friends:"الأصدقاء", nav_profile:"حسابي",
-        tank_full:"🛑 خزان 24 ساعة ممتلئ (100%) - اجمع الآن!", tank_fill:"⏳ خزان 24 ساعة:"
+        tank_full:"🛑 خزان 24 ساعة ممتلئ (100%) - اجمع الآن!", tank_fill:"⏳ خزان 24 ساعة:",
+        daily_login_title:"🎁 تسجيل الدخول اليومي (7 أيام)", claim_daily_btn:"استلام المكافأة اليومية",
+        day:"يوم", claimed:"تم الاستلام"
       },
       ru: {
         mining_rate:"СКОРОСТЬ", current_rank:"УРОВЕНЬ КОШЕЛЬКА", claimed_in_app:"Собрано в боте",
@@ -570,9 +593,10 @@
         open_ch:"1. Открыть", open_grp:"1. Открыть", verify_btn:"2. Проверить ✅",
         wallet_hold:"В кошельке (Скорость)", mined_app:"В боте",
         buy_upgrade_btn:"Купить на STON.fi для увеличения скорости",
-        ref_rule_title:"⚠️ Реферальная система (+100 + 5%)",
-        ref_rule_desc:"1️⃣ Активация: друг подключает TON кошелек и покупает от 100 монет на STON.fi (вы получаете +100 монет).<br>2️⃣ Бонус 5%: каждый раз, когда активный друг собирает добычу, вы автоматически получаете 5% от его сбора!",
+        ref_rule_title:"⚠️ Реферальная система",
+        ref_rule_desc:"1️⃣ Активация: друг достигает Уровня 2 (держит от 100 монет на STON.fi). Вы получаете +100 монет.<br>2️⃣ Бонус 5%: каждый раз, когда активный друг собирает добычу, вы автоматически получаете 5% от его сбора!",
         ref_pending:"Ожидание", ref_verified:"Активно", ref_earned:"Доход 5%", copy_btn:"Копировать", share_btn:"Поделиться",
+        pending_ref_title:"Ожидаемый доход с рефералов", collect_ref_btn:"Собрать доход с рефералов",
         ton_wallet_title:"Кошелек TON", connect_wallet_btn:"Подключить TON Кошелек",
         sync_hold_btn:"Обновить Холд", disconnect_wallet_btn:"Отключить",
         hold_wallet_lbl:"В кошельке", mine_wallet_lbl:"Баланс майнинга",
@@ -580,7 +604,9 @@
         hold_cond_lbl:"Нужно 25% Холда:", your_hold_lbl:"Ваш Холд:", req_wd_btn:"Запросить вывод",
         buy_hold_btn:"Купить на STON.fi (25% Холд)", wd_hist_title:"История выводов",
         nav_mine:"Майнинг", nav_tasks:"Задания", nav_boost:"Буст", nav_friends:"Друзья", nav_profile:"Профиль",
-        tank_full:"🛑 Бак 24ч полон (100%) - Соберите!", tank_fill:"⏳ Бак майнинга 24ч:"
+        tank_full:"🛑 Бак 24ч полон (100%) - Соберите!", tank_fill:"⏳ Бак майнинга 24ч:",
+        daily_login_title:"🎁 Ежедневный вход (7 Дней)", claim_daily_btn:"Получить награду",
+        day:"День", claimed:"Получено"
       }
     };
     let currentLang = localStorage.getItem('vk_lang') || 'en';
@@ -630,6 +656,11 @@
     let turboUntil = parseInt(localStorage.getItem('vksec_turbo')) || 0;
     let LEVELS_DATA = [];
     let currentLevelPage = 1;
+    
+    // Daily Login State
+    let dailyStreak = 0;
+    let lastDailyCheckIn = 0;
+    const DAILY_REWARDS = [10, 20, 30, 50, 70, 100, 200]; // Rewards for day 1 to 7
 
     let bootProg = 0;
     const bootTimer = setInterval(() => {
@@ -687,6 +718,80 @@
       return `منذ ${Math.floor(hrs/24)} يوم`;
     }
 
+    function getUtcDay(ts) {
+      return Math.floor(ts / (1000 * 60 * 60 * 24));
+    }
+
+    function renderDailyLogin() {
+      const container = document.getElementById('daily-streak-container');
+      if (!container) return;
+      const todayUtc = getUtcDay(Date.now());
+      const lastUtc = getUtcDay(lastDailyCheckIn);
+      const hasClaimedToday = (lastUtc === todayUtc);
+
+      container.innerHTML = DAILY_REWARDS.map((rew, idx) => {
+        const dayNum = idx + 1;
+        let boxClass = "daily-box";
+        let statusText = `+${rew}`;
+        
+        if (dayNum <= dailyStreak) {
+          boxClass += " claimed";
+          statusText = "✅";
+        } else if (dayNum === dailyStreak + 1 && !hasClaimedToday) {
+          boxClass += " active";
+        } else if (dayNum === dailyStreak + 1 && hasClaimedToday) {
+          boxClass += " claimed"; // Shows as claimed if already grabbed for the next upcoming day
+          statusText = "✅";
+        }
+
+        return `<div class="${boxClass}">
+          <span class="day-num">${dayNum}</span>
+          ${statusText}
+        </div>`;
+      }).join('');
+
+      const btn = document.getElementById('btn-claim-daily');
+      if (hasClaimedToday) {
+        btn.disabled = true;
+        btn.style.opacity = 0.5;
+        btn.innerText = I18N[currentLang].claimed;
+      } else {
+        btn.disabled = false;
+        btn.style.opacity = 1;
+        btn.innerHTML = `💰 <span data-i18n="claim_daily_btn">${I18N[currentLang].claim_daily_btn}</span>`;
+      }
+    }
+
+    async function claimDailyLogin(e) {
+      if (!isHumanClick(e)) return;
+      const todayUtc = getUtcDay(Date.now());
+      const lastUtc = getUtcDay(lastDailyCheckIn);
+
+      if (todayUtc === lastUtc) return showToast("Already claimed today!", "#ef4444");
+
+      if (lastUtc === todayUtc - 1) {
+        dailyStreak = (dailyStreak % 7) + 1;
+      } else {
+        dailyStreak = 1;
+      }
+
+      const reward = DAILY_REWARDS[dailyStreak - 1];
+      minedInApp += reward;
+      lastDailyCheckIn = Date.now();
+
+      if (db) {
+        await db.collection("players").doc(CURRENT_UID).update({
+          dailyStreak: dailyStreak,
+          lastDailyCheckIn: lastDailyCheckIn,
+          mined: firebase.firestore.FieldValue.increment(reward)
+        });
+      }
+      await savePlayerToCloud();
+      SoundFX.buySuccess();
+      applyUI();
+      showToast(`🎁 +${reward} ${config.coinSym} Daily Reward!`, "#10b981");
+    }
+
     async function initCloudSync() {
       if (!db) {
         finishBoot();
@@ -725,6 +830,8 @@
             refCommissionEarned: 0,
             pendingRefComm: 0,
             lastWithdrawTime: 0,
+            dailyStreak: 0,
+            lastDailyCheckIn: 0,
             lastSeen: Date.now(),
             referrals: [],
             createdAt: Date.now()
@@ -775,6 +882,8 @@
         if (typeof d.refCommissionEarned === 'number') refCommissionEarned = d.refCommissionEarned;
         if (typeof d.pendingRefComm === 'number') pendingRefComm = d.pendingRefComm;
         if (typeof d.lastWithdrawTime === 'number') lastWithdrawTime = d.lastWithdrawTime;
+        if (typeof d.dailyStreak === 'number') dailyStreak = d.dailyStreak;
+        if (typeof d.lastDailyCheckIn === 'number') lastDailyCheckIn = d.lastDailyCheckIn;
         if (d.walletAddr !== undefined) linkedWalletAddr = d.walletAddr;
         invitedById = d.invitedBy || null;
         refBonusPaid = !!d.refBonusPaid;
@@ -815,11 +924,13 @@
           id: CURRENT_UID, name: tgUser.first_name || "Warrior", username: tgUser.username || "user",
           deviceHash: deviceFingerprint, mined: minedInApp, hold: walletHold,
           lastCollectTime, walletAddr: linkedWalletAddr, lastWithdrawTime,
+          dailyStreak, lastDailyCheckIn,
           updatedAt: Date.now()
         }, { merge: true });
 
-        const minReqHold = Number(config.refMinHold) || 100;
-        if (invitedById && !refBonusPaid && linkedWalletAddr && walletHold >= minReqHold) {
+        // Referral activation check: Requires reaching Level 2 (Hold >= 100)
+        const reqHold = LEVELS_DATA[1].reqHold; // Level 2 reqHold is 100
+        if (invitedById && !refBonusPaid && linkedWalletAddr && walletHold >= reqHold) {
           refBonusPaid = true;
           await db.collection("players").doc(CURRENT_UID).update({ refBonusPaid: true });
           const invRef = db.collection("players").doc(String(invitedById));
@@ -838,7 +949,7 @@
 
     async function collectReferralProfits(e) {
       if (!isHumanClick(e)) return;
-      if (pendingRefComm <= 0) return showToast("لا توجد أرباح إحالات معلقة", "#f59e0b");
+      if (pendingRefComm <= 0) return showToast("No pending referral profits", "#f59e0b");
       minedInApp += pendingRefComm;
       const toCollect = pendingRefComm;
       pendingRefComm = 0;
@@ -848,7 +959,7 @@
       await savePlayerToCloud();
       SoundFX.buySuccess();
       applyUI();
-      showToast(`💰 تم جمع ${toCollect.toFixed(4)} ${config.coinSym} من أرباح الإحالات!`);
+      showToast(`💰 Collected ${toCollect.toFixed(4)} ${config.coinSym}!`);
     }
 
     let tonConnectUI = null, userClickedConnect = false;
@@ -965,6 +1076,8 @@
       
       const prcEl = document.getElementById('pending-ref-comm-display');
       if (prcEl) prcEl.innerText = pendingRefComm.toFixed(4);
+      
+      renderDailyLogin();
 
       document.getElementById('prof-name').innerText = tgUser.first_name || "MANSAWY";
       document.getElementById('prof-username').innerText = tgUser.username ? "@" + tgUser.username : "@user";
@@ -1036,7 +1149,7 @@
       SoundFX.collect();
       await savePlayerToCloud();
 
-      const minReqHold = Number(config.refMinHold) || 100;
+      const minReqHold = LEVELS_DATA[1].reqHold; // Level 2 reqHold
       if (db && invitedById && linkedWalletAddr && walletHold >= minReqHold) {
         const comm = +(pending * ((Number(config.refClaimPercent) || 5) / 100)).toFixed(4);
         if (comm > 0) {
@@ -1315,6 +1428,7 @@
     document.getElementById('btn-collect-main').addEventListener('click', collectMining);
     document.getElementById('btn-goto-boost').addEventListener('click', () => switchTab('boost'));
     document.getElementById('btn-collect-ref').addEventListener('click', collectReferralProfits);
+    document.getElementById('btn-claim-daily').addEventListener('click', claimDailyLogin);
 
     document.getElementById('btn-turbo').addEventListener('click', e => {
       if (!isHumanClick(e)) return;
