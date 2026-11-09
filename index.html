@@ -6,6 +6,9 @@
   <title>$VIKING 3D MINER</title>
   <script src="https://telegram.org/js/telegram-web-app.js"></script>
   <script src="https://unpkg.com/@tonconnect/ui@latest/dist/tonconnect-ui.min.js"></script>
+  <!-- مكتبات Firebase السحابية -->
+  <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
   <style>
     :root {
       --gold: #f59e0b;
@@ -18,7 +21,6 @@
 
     * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; user-select: none; -webkit-tap-highlight-color: transparent; }
     
-    /* إزالة perspective من الـ body لإصلاح مكان نافذة TON Connect */
     html, body {
       background: radial-gradient(circle at 50% -10%, #3b1d08 0%, #0d121d 45%, #05070b 100%);
       color: #fff;
@@ -37,7 +39,6 @@
       z-index: 999999 !important;
     }
 
-    /* الحاوية الرئيسية للتطبيق */
     .app-shell {
       display: flex;
       flex-direction: column;
@@ -77,7 +78,7 @@
       cursor: pointer; padding: 2px 6px;
     }
 
-    /* قائمة اختيار اللغة المنسدلة */
+    /* القائمة المنسدلة لاختيار اللغة */
     .lang-menu-popup {
       position: absolute; top: 48px; right: 48px;
       background: linear-gradient(180deg, #1e2638, #0d111a);
@@ -105,7 +106,7 @@
     .page::-webkit-scrollbar { display: none; }
     .page.active { display: block; animation: popIn 0.2s ease-out; }
 
-    /* الصفحة الأولى (التعدين) ثابتة تماماً بدون أي تمرير */
+    /* الصفحة الأولى (التعدين) ثابتة بدون أي تمرير */
     #page-mine.page.active {
       display: flex;
       flex-direction: column;
@@ -135,7 +136,6 @@
       box-shadow: inset 0 3px 6px rgba(0,0,0,0.7);
     }
 
-    /* Hero Banner */
     .hero-banner { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; padding: 0 2px; }
     .hero-title h1 { font-size: 22px; font-weight: 900; text-transform: uppercase; color: #fff; text-shadow: 0 2px 0 #78350f; }
     .hero-title p { font-size: 11.5px; color: #cbd5e1; }
@@ -148,7 +148,7 @@
       display: flex; align-items: center; justify-content: center; font-size: 30px; flex-shrink: 0;
     }
 
-    /* ================= 3D VIKING COIN (COMPACT FOR FIXED SCREEN) ================= */
+    /* ================= 3D VIKING COIN ================= */
     .coin-stage-3d {
       perspective: 800px;
       width: 132px; height: 132px;
@@ -232,7 +232,6 @@
     }
     .btn-3d-dark:active { transform: translateY(3px); box-shadow: 0 1px 0 #05080f; }
 
-    /* Progress Bar */
     .prog-row { display: flex; justify-content: space-between; font-size: 11px; color: var(--text-muted); margin-bottom: 4px; }
     .prog-row strong { color: var(--gold-bright); }
     .prog-bg-3d {
@@ -249,7 +248,6 @@
     .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
     .grid-3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
 
-    /* Boost Level Cards 3D */
     .miner-card-3d {
       background: linear-gradient(165deg, #1b2232, #0d111a);
       border-radius: 16px; padding: 10px;
@@ -329,7 +327,7 @@
     <div style="font-size: 60px; margin-bottom: 12px;">🚫</div>
     <h1 style="color: #ef4444; font-size: 22px; margin-bottom: 8px;">ACCOUNT BANNED</h1>
     <p style="color: #94a3b8; font-size: 13px; max-width: 300px; line-height: 1.6;">
-      تم حظر حسابك بواسطة نظام الحماية بسبب تعدد الحسابات أو محاولة التلاعب.
+      تم حظر حسابك بواسطة نظام الحماية السحابي بسبب تعدد الحسابات أو محاولة التلاعب.
     </p>
   </div>
 
@@ -339,7 +337,7 @@
     <!-- ================= 3D TOP HEADER ================= -->
     <div class="top-bar">
       <div class="icon-3d" id="sound-toggle-btn">🔊</div>
-      <!-- اضغط 5 مرات متتالية هنا لفتح لوحة المالك السرية -->
+      <!-- اضغط 5 ضغطات سريعة هنا لفتح لوحة المالك السرية -->
       <div class="brand-logo-3d" id="ui-brand-title">$VIKING MINER</div>
       <div style="display:flex; gap:6px; position:relative;">
         <div class="icon-3d" id="lang-menu-btn">
@@ -347,7 +345,7 @@
         </div>
         <div class="icon-3d" id="top-wallet-shortcut">👛</div>
 
-        <!-- القائمة المنسدلة لاختيار اللغة -->
+        <!-- قائمة اختيار اللغة المنسدلة -->
         <div class="lang-menu-popup" id="lang-dropdown">
           <div class="lang-opt" data-lang="en"><span>🇬🇧 English</span><span class="l-chk" id="chk-en">✓</span></div>
           <div class="lang-opt" data-lang="ar"><span>🇪🇬 العربية</span><span class="l-chk" id="chk-ar"></span></div>
@@ -358,13 +356,12 @@
 
     <!-- ================= 1. MINE TAB (FIXED NON-SCROLLING SCREEN) ================= -->
     <div id="page-mine" class="page active">
-      <!-- الصف العلوي المدمج: سرعة التعدين والمستوى -->
       <div class="card-3d" style="margin-bottom:0; padding:10px;">
         <div class="grid-2">
           <div class="sub-3d" style="padding:7px 10px;">
             <div style="font-size:9.5px; color:var(--text-muted);" data-i18n="mining_rate">MINING RATE</div>
             <div style="font-size:15px; font-weight:900; color:#fff;" id="mine-ths">0.200 TH/s</div>
-            <div style="font-size:10px; color:#22c55e; font-weight:700;" data-i18n="mining_active">● Mining Active</div>
+            <div style="font-size:10px; color:#22c55e; font-weight:700;" data-i18n="mining_active">● Cloud Synced</div>
           </div>
           <div class="sub-3d" style="padding:7px 10px;">
             <div style="font-size:9.5px; color:var(--text-muted);" data-i18n="current_rank">CURRENT RANK</div>
@@ -374,13 +371,11 @@
         </div>
       </div>
 
-      <!-- الرصيد المجموع في التطبيق -->
       <div style="text-align:center;">
         <div style="font-size:21px; font-weight:900; text-shadow:0 2px 0 #000;"><span id="mine-claimed-total">0</span> <span class="coin-sym">$VIKING</span></div>
         <div style="display:inline-block; background:linear-gradient(180deg,#d97706,#92400e); padding:2px 12px; border-radius:14px; font-size:10px; font-weight:800;" data-i18n="claimed_in_app">Claimed in the app</div>
       </div>
 
-      <!-- العملة الـ 3D والعداد الحي -->
       <div>
         <div class="coin-stage-3d" id="coin-3d-trigger">
           <div class="coin-aura"></div>
@@ -394,7 +389,6 @@
         <div class="live-counter-3d">+<span id="live-mined-num">0.000000</span></div>
       </div>
 
-      <!-- شريط التقدم للمستوى التالي -->
       <div>
         <div class="prog-row">
           <span id="mine-next-info">Next: LVL 2 · 8.25/d</span>
@@ -403,7 +397,6 @@
         <div class="prog-bg-3d"><div class="prog-fill-3d" id="mine-prog-bar"></div></div>
       </div>
 
-      <!-- الستريك والإعلانات والعداد اليومي -->
       <div>
         <div class="grid-2" style="margin-bottom:6px;">
           <div class="sub-3d" style="display:flex; flex-direction:column; justify-content:center; padding:7px 10px;">
@@ -421,7 +414,6 @@
         </div>
       </div>
 
-      <!-- أزرار الجمع والشراء من STON.fi -->
       <div>
         <button class="btn-3d-gold" id="btn-collect-main" style="justify-content:space-between; margin-bottom:8px; padding:11px 14px;">
           <span>🛡️</span>
@@ -616,7 +608,7 @@
         <div class="icon-3d">⚔️</div>
       </div>
 
-      <!-- بطاقة ربط وإلغاء ربط المحفظة (تم إصلاح النافذة تماماً) -->
+      <!-- ربط وإلغاء ربط المحفظة -->
       <div class="card-3d">
         <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
           <div>
@@ -653,7 +645,6 @@
 
       <div id="wd-unlock-status" class="card-3d" style="padding:10px 12px; font-size:11.5px; font-weight:700; border-color:#ef4444; color:#fca5a5;"></div>
 
-      <!-- قسم السحب (الحد الأدنى 5000 + رسوم 5% + شرط 25% Hold) -->
       <div class="card-3d">
         <h3 style="font-size:15px; margin-bottom:8px;"><span data-i18n="withdraw_title">Withdraw</span> <span class="coin-sym">$VIKING</span></h3>
         
@@ -681,11 +672,11 @@
       </div>
     </div>
 
-    <!-- ================= 6. HIDDEN OWNER ADMIN DASHBOARD ================= -->
+    <!-- ================= 6. HIDDEN OWNER ADMIN DASHBOARD (FIREBASE LIVE) ================= -->
     <div id="page-admin" class="page admin-wrap">
       <div class="card-3d">
         <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
-          <h3 style="color:var(--gold-bright); font-size:16px;">🛡️ لوحة مالك البوت السرية</h3>
+          <h3 style="color:var(--gold-bright); font-size:16px;">🛡️ لوحة المالك السرية (Firebase Live)</h3>
           <button class="btn-3d-dark" id="btn-close-admin" style="width:auto; padding:5px 12px;">إغلاق ✕</button>
         </div>
 
@@ -793,8 +784,8 @@
             </div>
           </div>
 
-          <button class="btn-3d-gold" id="btn-save-admin" style="margin-bottom:8px;">💾 حفظ وتطبيق جميع الإعدادات</button>
-          <button class="btn-3d-danger" id="btn-reset-all">🗑️ تصفير وإعادة ضبط المصنع</button>
+          <button class="btn-3d-gold" id="btn-save-admin" style="margin-bottom:8px;">💾 حفظ الإعدادات في Firebase للجميع</button>
+          <button class="btn-3d-danger" id="btn-reset-all">🗑️ تصفير حسابي المحلي</button>
         </div>
       </div>
     </div>
@@ -828,8 +819,39 @@
     if (tg) tg.expand();
 
     const tgUser = tg?.initDataUnsafe?.user || { id: 7216746593, first_name: "MANSAWY", username: "mansawy1" };
+    const CURRENT_UID = String(tgUser.id);
 
-    // ================= 1. المؤثرات الصوتية =================
+    // ================= 1. تهيئة اتصال Firebase السحابي الخاص بك =================
+    const firebaseConfig = {
+      apiKey: "AIzaSyCzbpZMYhi9WWr4oCSV_xClquF8xcVfSUo",
+      authDomain: "viking-miner.firebaseapp.com",
+      projectId: "viking-miner",
+      storageBucket: "viking-miner.firebasestorage.app",
+      messagingSenderId: "593041882697",
+      appId: "1:593041882697:web:5e66b81d5a620ddc1fc998"
+    };
+
+    let db = null;
+    try {
+      if (!firebase.apps.length) {
+        firebase.initializeApp(firebaseConfig);
+      }
+      db = firebase.firestore();
+    } catch (err) {
+      console.error("Firebase Init Error:", err);
+    }
+
+    // توليد بصمة جهاز ثابتة (Device Fingerprint) لكشف تعدد الحسابات من نفس الموبايل
+    let deviceFingerprint = localStorage.getItem('vk_device_fp');
+    if (!deviceFingerprint) {
+      const navInfo = [navigator.userAgent, screen.width, screen.height, navigator.language].join('|');
+      let h = 0;
+      for (let i = 0; i < navInfo.length; i++) h = Math.imul(31, h) + navInfo.charCodeAt(i) | 0;
+      deviceFingerprint = "DEV-" + Math.abs(h).toString(16).toUpperCase() + "-" + Math.random().toString(36).substring(2, 5).toUpperCase();
+      localStorage.setItem('vk_device_fp', deviceFingerprint);
+    }
+
+    // ================= 2. المؤثرات الصوتية 3D =================
     let soundEnabled = true;
     let audioCtx = null;
 
@@ -917,10 +939,10 @@
       }
     };
 
-    // ================= 2. اللغات الثلاث + القائمة المنسدلة =================
+    // ================= 3. اللغات الثلاث =================
     const I18N = {
       en: {
-        mining_rate: "MINING RATE", mining_active: "● Mining Active", current_rank: "CURRENT RANK",
+        mining_rate: "MINING RATE", mining_active: "● Cloud Synced", current_rank: "CURRENT RANK",
         claimed_in_app: "Claimed in the app", streak_txt: "🔥 1-day streak · x1.00", streak_sub: "Keep raiding daily → x1.5",
         turbo_btn: "Watch ad · Turbo x2<br><small>5 min speed</small>", collect_btn: "RAID & COLLECT COINS",
         buy_btn: "Buy", levels_btn: "Levels (1–100)",
@@ -948,7 +970,7 @@
         nav_mine: "Mine", nav_tasks: "Tasks", nav_boost: "Boost", nav_friends: "Friends", nav_profile: "Profile"
       },
       ar: {
-        mining_rate: "سرعة التعدين", mining_active: "● التعدين نشط", current_rank: "المستوى الحالي",
+        mining_rate: "سرعة التعدين", mining_active: "● متصل بالسحابة", current_rank: "المستوى الحالي",
         claimed_in_app: "رصيدك المجموع بالتطبيق", streak_txt: "🔥 التزام يومي · x1.00", streak_sub: "استمر يومياً للوصول إلى → x1.5",
         turbo_btn: "شاهد إعلان · سرعة x2<br><small>لمدة 5 دقائق</small>", collect_btn: "اجمع عملات التعدين الآن",
         buy_btn: "شراء", levels_btn: "المستويات (1–100)",
@@ -976,7 +998,7 @@
         nav_mine: "التعدين", nav_tasks: "المهام", nav_boost: "السرعة", nav_friends: "الأصدقاء", nav_profile: "حسابي"
       },
       ru: {
-        mining_rate: "СКОРОСТЬ", mining_active: "● Активен", current_rank: "ТЕКУЩИЙ РАНГ",
+        mining_rate: "СКОРОСТЬ", mining_active: "● Синхронизировано", current_rank: "ТЕКУЩИЙ РАНГ",
         claimed_in_app: "Собрано в приложении", streak_txt: "🔥 Серия 1 дн. · x1.00", streak_sub: "Заходите каждый день → x1.5",
         turbo_btn: "Реклама · Турбо x2<br><small>на 5 минут</small>", collect_btn: "СОБРАТЬ МОНЕТЫ",
         buy_btn: "Купить", levels_btn: "Уровни (1–100)",
@@ -1025,20 +1047,7 @@
       });
     }
 
-    // ================= 3. الإعدادات والتشفير الأمني =================
-    const SECRET_SALT = "VK3D_SEC_99182_" + tgUser.id;
-    const JETTON_ADDRESS = "EQB6biZUnidas7CSD48sOP8Os2mpQ7Go9ctgvbpcW4ejKzdw";
-
-    function computeSignature(m, h) {
-      const raw = `${Math.floor(m * 100)}|${Math.floor(h * 100)}|${SECRET_SALT}`;
-      let hash = 2166136261;
-      for (let i = 0; i < raw.length; i++) {
-        hash ^= raw.charCodeAt(i);
-        hash = Math.imul(hash, 16777619);
-      }
-      return (hash >>> 0).toString(16);
-    }
-
+    // ================= 4. المتغيرات الأساسية وربط السحابة =================
     const defaultConfig = {
       brandTitle: "$VIKING MINER",
       coinSym: "$VIKING",
@@ -1050,41 +1059,177 @@
       channel1: "https://t.me/YGRAM1",
       channel2: "https://t.me/telegram",
       botUsername: "AURMiningbot",
-      ownerIds: [7216746593, 7216746, 8084159834],
       adminPin: "202020"
     };
 
     let config = Object.assign({}, defaultConfig, JSON.parse(localStorage.getItem('vksec_config') || "{}"));
-    // ضمان تحديث رابط STON.fi الجديد دائماً
-    if (!config.buySwapUrl || !config.buySwapUrl.includes("EQB6biZUnidas7CSD48sOP8Os2mpQ7Go9ctgvbpcW4ejKzdw")) {
-      config.buySwapUrl = defaultConfig.buySwapUrl;
-    }
-
     let minedInApp = parseFloat(localStorage.getItem('vksec_mined')) || 0;
     let walletHold = parseFloat(localStorage.getItem('vksec_hold')) || 0;
-    let savedSig = localStorage.getItem('vksec_sig2');
-
-    if (savedSig && savedSig !== computeSignature(minedInApp, walletHold)) {
-      minedInApp = 0;
-      walletHold = 0;
-    }
-
-    function saveSecureBalances() {
-      localStorage.setItem('vksec_mined', minedInApp);
-      localStorage.setItem('vksec_hold', walletHold);
-      localStorage.setItem('vksec_sig2', computeSignature(minedInApp, walletHold));
-    }
-    saveSecureBalances();
-
     let lastCollectTime = parseInt(localStorage.getItem('vksec_last_collect')) || Date.now();
     let adsWatched = parseInt(localStorage.getItem('vksec_ads')) || 0;
-    let pendingRefs = parseInt(localStorage.getItem('vksec_refs_p')) || 0;
-    let verifiedRefs = parseInt(localStorage.getItem('vksec_refs_v')) || 0;
     let linkedWalletAddr = localStorage.getItem('vksec_wallet_addr') || "";
     let wdHistory = JSON.parse(localStorage.getItem('vksec_wd_hist') || "[]");
     let turboUntil = parseInt(localStorage.getItem('vksec_turbo')) || 0;
+    let myReferrals = [];
+    let invitedById = null;
+    let refBonusPaid = false;
 
-    // ================= 4. بناء الـ 100 مستوى =================
+    let usersDB = [];
+    let allWithdrawalsDB = [];
+    let currentUserFilter = 'all';
+
+    // قراءة كود الإحالة للزائر الجديد من تليجرام أو الرابط
+    function detectReferrerId() {
+      const startParam = tg?.initDataUnsafe?.start_param || new URLSearchParams(window.location.search).get('ref') || "";
+      if (startParam) {
+        const cleanId = startParam.replace('ref_', '').trim();
+        if (cleanId && cleanId !== CURRENT_UID) return cleanId;
+      }
+      return null;
+    }
+
+    // مزامنة بيانات اللاعب والإعدادات مع Firebase Firestore
+    async function initCloudSync() {
+      if (!db) return;
+
+      // 1. الاستماع لإعدادات البوت العامة التي يعدلها المالك
+      db.collection("settings").doc("global").onSnapshot(doc => {
+        if (doc.exists) {
+          config = Object.assign({}, defaultConfig, doc.data());
+          localStorage.setItem('vksec_config', JSON.stringify(config));
+          applyUI();
+        }
+      });
+
+      // 2. قراءة أو إنشاء حساب اللاعب الحالي في مجموعة players
+      const playerRef = db.collection("players").doc(CURRENT_UID);
+      try {
+        const snap = await playerRef.get();
+        if (!snap.exists) {
+          const invId = detectReferrerId();
+          const newPlayer = {
+            id: CURRENT_UID,
+            name: tgUser.first_name || "Warrior",
+            username: tgUser.username || "viking_user",
+            deviceHash: deviceFingerprint,
+            mined: minedInApp,
+            hold: walletHold,
+            lastCollectTime: lastCollectTime,
+            adsWatched: adsWatched,
+            walletAddr: linkedWalletAddr,
+            banned: false,
+            invitedBy: invId || null,
+            refBonusPaid: false,
+            referrals: [],
+            createdAt: Date.now()
+          };
+          await playerRef.set(newPlayer);
+
+          // إذا دخل عن طريق صديق، نضيفه لقائمة إحالات الصديق في Firebase
+          if (invId) {
+            const inviterRef = db.collection("players").doc(String(invId));
+            const invSnap = await inviterRef.get();
+            if (invSnap.exists) {
+              const invData = invSnap.data();
+              const isSameDevice = (invData.deviceHash === deviceFingerprint);
+              const refsArr = invData.referrals || [];
+              if (!refsArr.some(r => String(r.id) === CURRENT_UID)) {
+                refsArr.push({
+                  id: CURRENT_UID,
+                  name: tgUser.first_name || "Warrior",
+                  username: tgUser.username || "user",
+                  deviceHash: deviceFingerprint,
+                  bought: 0,
+                  status: isSameDevice ? "⚠️ نفس الجهاز (تعدد)" : "Pending ⏳"
+                });
+                await inviterRef.update({ referrals: refsArr });
+              }
+            }
+          }
+        }
+      } catch (e) {
+        console.warn("Firestore Player Init:", e);
+      }
+
+      // 3. الاستماع الحي لملف اللاعب الحالي (لتطبيق الحظر أو تعديل الرصيد من الأدمن فوراً)
+      playerRef.onSnapshot(doc => {
+        if (!doc.exists) return;
+        const d = doc.data();
+        if (d.banned) {
+          document.getElementById('banned-screen').style.display = 'flex';
+          return;
+        } else {
+          document.getElementById('banned-screen').style.display = 'none';
+        }
+
+        if (typeof d.mined === 'number') minedInApp = d.mined;
+        if (typeof d.hold === 'number') walletHold = d.hold;
+        if (d.walletAddr) linkedWalletAddr = d.walletAddr;
+        myReferrals = d.referrals || [];
+        invitedById = d.invitedBy || null;
+        refBonusPaid = !!d.refBonusPaid;
+
+        localStorage.setItem('vksec_mined', minedInApp);
+        localStorage.setItem('vksec_hold', walletHold);
+        applyUI();
+      });
+
+      // 4. الاستماع لطلبات السحب الخاصة باللاعب
+      db.collection("withdrawals").where("userId", "==", CURRENT_UID).onSnapshot(snap => {
+        const arr = [];
+        snap.forEach(d => arr.push(Object.assign({ docId: d.id }, d.data())));
+        arr.sort((a, b) => (b.timestamp || 0) - (a.timestamp || 0));
+        wdHistory = arr;
+        renderWithdrawHistory();
+      });
+    }
+
+    // حفظ أرصدة اللاعب في Firebase
+    async function savePlayerToCloud() {
+      localStorage.setItem('vksec_mined', minedInApp);
+      localStorage.setItem('vksec_hold', walletHold);
+      localStorage.setItem('vksec_last_collect', lastCollectTime);
+      if (!db) return;
+      try {
+        await db.collection("players").doc(CURRENT_UID).set({
+          id: CURRENT_UID,
+          name: tgUser.first_name || "Warrior",
+          username: tgUser.username || "viking_user",
+          deviceHash: deviceFingerprint,
+          mined: minedInApp,
+          hold: walletHold,
+          lastCollectTime: lastCollectTime,
+          adsWatched: adsWatched,
+          walletAddr: linkedWalletAddr,
+          updatedAt: Date.now()
+        }, { merge: true });
+
+        // تفعيل مكافأة الإحالة (+100 عملة للداعي) تلقائياً إذا ربط اللاعب محفظته واشترى 100+ عملة
+        if (invitedById && !refBonusPaid && linkedWalletAddr && walletHold >= 100) {
+          refBonusPaid = true;
+          await db.collection("players").doc(CURRENT_UID).update({ refBonusPaid: true });
+          const invRef = db.collection("players").doc(String(invitedById));
+          const invSnap = await invRef.get();
+          if (invSnap.exists) {
+            const invData = invSnap.data();
+            if (invData.deviceHash !== deviceFingerprint) {
+              const updatedRefs = (invData.referrals || []).map(r => {
+                if (String(r.id) === CURRENT_UID) {
+                  return Object.assign({}, r, { bought: Math.floor(walletHold), status: "Verified ✅" });
+                }
+                return r;
+              });
+              await invRef.update({
+                mined: (invData.mined || 0) + Number(config.refReward || 100),
+                referrals: updatedRefs
+              });
+            }
+          }
+        }
+      } catch (e) {}
+    }
+
+    // ================= 5. بناء الـ 100 مستوى =================
     const LEVELS_DATA = [];
     for (let i = 1; i <= 100; i++) {
       const reqHold = i === 1 ? 0 : Math.round(Math.pow(i - 1, 1.85) * 80);
@@ -1116,7 +1261,7 @@
       setTimeout(() => t.style.display = 'none', 2800);
     }
 
-    // ================= 5. ربط وإلغاء ربط محفظة TON + فحص عملة STON.fi =================
+    // ================= 6. ربط وإلغاء ربط محفظة TON + فحص عملة STON.fi =================
     let tonConnectUI = null;
     try {
       tonConnectUI = new TON_CONNECT_UI.TonConnectUI({
@@ -1129,12 +1274,14 @@
           linkedWalletAddr = wallet.account.address;
           localStorage.setItem('vksec_wallet_addr', linkedWalletAddr);
           SoundFX.buySuccess();
+          savePlayerToCloud();
           applyUI();
           syncOnChainJettonHold(false);
           showToast("👛 تم ربط محفظة TON بنجاح!");
         } else {
           linkedWalletAddr = "";
           localStorage.removeItem('vksec_wallet_addr');
+          savePlayerToCloud();
           applyUI();
         }
       });
@@ -1144,9 +1291,7 @@
       SoundFX.click();
       if (tonConnectUI) {
         try {
-          if (tonConnectUI.connected) {
-            await tonConnectUI.disconnect();
-          }
+          if (tonConnectUI.connected) await tonConnectUI.disconnect();
           await tonConnectUI.openModal();
         } catch (err) {
           showToast("⚠️ جاري فتح نافذة ربط المحفظة...", "#f59e0b");
@@ -1159,24 +1304,21 @@
     async function disconnectTonWallet() {
       SoundFX.click();
       try {
-        if (tonConnectUI && tonConnectUI.connected) {
-          await tonConnectUI.disconnect();
-        }
+        if (tonConnectUI && tonConnectUI.connected) await tonConnectUI.disconnect();
       } catch (e) {}
       linkedWalletAddr = "";
       localStorage.removeItem('vksec_wallet_addr');
+      savePlayerToCloud();
       applyUI();
       showToast("🔌 تم إلغاء ربط المحفظة بنجاح!", "#f59e0b");
     }
 
-    // فتح رابط الشراء المباشر على STON.fi
     function openStonfiSwap() {
       SoundFX.click();
       const url = config.buySwapUrl || defaultConfig.buySwapUrl;
       window.open(url, '_blank');
     }
 
-    // فحص رصيد العملة الحقيقي في المحفظة عبر البلوكتشين بعد الشراء من STON.fi
     async function syncOnChainJettonHold(showMsg = true) {
       if (!linkedWalletAddr) {
         if (showMsg) showToast("❌ اربط محفظة TON أولاً!", "#ef4444");
@@ -1200,7 +1342,7 @@
             const realBal = parseFloat(found.balance) / Math.pow(10, decimals);
             if (realBal > walletHold) {
               walletHold = realBal;
-              saveSecureBalances();
+              savePlayerToCloud();
               SoundFX.buySuccess();
               applyUI();
               if (showMsg) showToast(`✅ تم تحديث رصيدك من البلوكتشين: ${Math.floor(walletHold).toLocaleString()} ${config.coinSym}!`);
@@ -1214,47 +1356,9 @@
       }
     }
 
-    // ================= 6. قاعدة بيانات الأعضاء ومكافحة التعدد =================
-    const defaultUsersDB = [
-      {
-        id: tgUser.id,
-        name: tgUser.first_name || "MANSAWY",
-        username: tgUser.username || "mansawy1",
-        deviceHash: "DEV-OWNER-99A",
-        mined: minedInApp,
-        hold: walletHold,
-        banned: false,
-        referrals: [
-          { id: 5019281, name: "Ahmed Ali", username: "ahmed_cr", deviceHash: "DEV-8812A", bought: 1250, status: "Verified ✅" }
-        ]
-      },
-      {
-        id: 61928374,
-        name: "Karim Multi",
-        username: "karim_x",
-        deviceHash: "DEV-MULTI-77X",
-        mined: 3450,
-        hold: 0,
-        banned: false,
-        referrals: [
-          { id: 990011, name: "Fake 1", username: "bot1", deviceHash: "DEV-MULTI-77X", bought: 0, status: "⚠️ نفس الجهاز (تعدد)" }
-        ]
-      }
-    ];
-    let usersDB = JSON.parse(localStorage.getItem('vksec_users_db') || "null") || defaultUsersDB;
-    let currentUserFilter = 'all';
-
     // ================= 7. تحديث واجهة المستخدم =================
     function applyUI() {
       applyTranslations();
-
-      const me = usersDB.find(u => u.id == tgUser.id);
-      if (me && me.banned) {
-        document.getElementById('banned-screen').style.display = 'flex';
-        return;
-      } else {
-        document.getElementById('banned-screen').style.display = 'none';
-      }
 
       const { cur, next, totalHold } = getCurrentLevelObj();
       const isTurbo = Date.now() < turboUntil;
@@ -1300,17 +1404,19 @@
       renderLevelsGrid();
 
       // Friends
+      const verCount = myReferrals.filter(r => r.status && r.status.includes("Verified")).length;
+      const pendCount = myReferrals.length - verCount;
       document.getElementById('ref-rew-banner').innerText = config.refReward;
-      document.getElementById('ref-pending-count').innerText = pendingRefs;
-      document.getElementById('ref-verified-count').innerText = verifiedRefs;
-      document.getElementById('ref-earned-total').innerText = (verifiedRefs * config.refReward).toLocaleString();
-      document.getElementById('ref-link-box').value = `https://t.me/${config.botUsername}?start=ref_${tgUser.id}`;
+      document.getElementById('ref-pending-count').innerText = pendCount;
+      document.getElementById('ref-verified-count').innerText = verCount;
+      document.getElementById('ref-earned-total').innerText = (verCount * config.refReward).toLocaleString();
+      document.getElementById('ref-link-box').value = `https://t.me/${config.botUsername}?start=ref_${CURRENT_UID}`;
 
       // Profile
       document.getElementById('prof-name').innerText = tgUser.first_name || "MANSAWY";
       document.getElementById('prof-letter').innerText = (tgUser.first_name || "M").charAt(0).toUpperCase();
       document.getElementById('prof-username').innerText = tgUser.username ? "@" + tgUser.username : "@viking_user";
-      document.getElementById('prof-id').innerText = "ID " + tgUser.id;
+      document.getElementById('prof-id').innerText = "ID " + CURRENT_UID;
 
       const addrDisplay = document.getElementById('prof-wallet-addr-display');
       const badgeStatus = document.getElementById('wallet-badge-status');
@@ -1401,13 +1507,8 @@
 
       minedInApp += pending;
       lastCollectTime = Date.now();
-      saveSecureBalances();
-      localStorage.setItem('vksec_last_collect', lastCollectTime);
-
-      const me = usersDB.find(u => u.id == tgUser.id);
-      if (me) { me.mined = minedInApp; localStorage.setItem('vksec_users_db', JSON.stringify(usersDB)); }
-
       SoundFX.collect();
+      savePlayerToCloud();
       applyUI();
       showToast(`⚔️ +${pending.toFixed(4)} ${config.coinSym}!`);
     }
@@ -1458,7 +1559,7 @@
       });
     }
 
-    function requestWithdrawal(e) {
+    async function requestWithdrawal(e) {
       if (e && e.isTrusted === false) return;
       if (!linkedWalletAddr) {
         SoundFX.error();
@@ -1487,19 +1588,26 @@
       const netReceive = amt - feeAmt;
 
       minedInApp -= amt;
-      saveSecureBalances();
+      await savePlayerToCloud();
 
-      wdHistory.unshift({
-        id: Date.now(),
-        userId: tgUser.id,
+      const wdObj = {
+        userId: CURRENT_UID,
         userName: tgUser.first_name || "Viking",
+        walletAddr: linkedWalletAddr,
         amt: amt,
         net: netReceive,
         fee: feeAmt,
         status: "Pending ⏳",
-        date: new Date().toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'})
-      });
-      localStorage.setItem('vksec_wd_hist', JSON.stringify(wdHistory));
+        date: new Date().toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'}),
+        timestamp: Date.now()
+      };
+
+      if (db) {
+        try { await db.collection("withdrawals").add(wdObj); } catch (err) {}
+      } else {
+        wdHistory.unshift(wdObj);
+        localStorage.setItem('vksec_wd_hist', JSON.stringify(wdHistory));
+      }
 
       SoundFX.buySuccess();
       applyUI();
@@ -1520,9 +1628,33 @@
       `).join('');
     }
 
-    // ================= 8. لوحة تحكم المالك السرية =================
+    // ================= 8. لوحة المالك السرية المرتبطة بـ Firebase =================
+    let adminUnsubUsers = null;
+    let adminUnsubWds = null;
+
+    function startAdminRealtimeListeners() {
+      if (!db) return;
+      if (!adminUnsubUsers) {
+        adminUnsubUsers = db.collection("players").onSnapshot(snap => {
+          const arr = [];
+          snap.forEach(d => arr.push(d.data()));
+          usersDB = arr;
+          renderAdminUsersList();
+        });
+      }
+      if (!adminUnsubWds) {
+        adminUnsubWds = db.collection("withdrawals").onSnapshot(snap => {
+          const arr = [];
+          snap.forEach(d => arr.push(Object.assign({ docId: d.id }, d.data())));
+          arr.sort((a, b) => (b.timestamp || 0) - (a.timestamp || 0));
+          allWithdrawalsDB = arr;
+          renderAdminWithdrawals();
+        });
+      }
+    }
+
     function isUserMultiSuspect(user) {
-      const sameDeviceCount = usersDB.filter(u => u.deviceHash === user.deviceHash).length;
+      const sameDeviceCount = usersDB.filter(u => u.deviceHash && u.deviceHash === user.deviceHash).length;
       const fakeRefs = (user.referrals || []).some(r => r.deviceHash === user.deviceHash);
       return sameDeviceCount > 1 || fakeRefs;
     }
@@ -1534,7 +1666,7 @@
       document.getElementById('stat-banned-users').innerText = usersDB.filter(u => u.banned).length;
 
       let list = usersDB.filter(u => {
-        const matchQ = u.name.toLowerCase().includes(q) || u.username.toLowerCase().includes(q) || String(u.id).includes(q);
+        const matchQ = (u.name || "").toLowerCase().includes(q) || (u.username || "").toLowerCase().includes(q) || String(u.id).includes(q);
         if (!matchQ) return false;
         if (currentUserFilter === 'suspect') return isUserMultiSuspect(u);
         if (currentUserFilter === 'banned') return u.banned;
@@ -1542,6 +1674,11 @@
       });
 
       const container = document.getElementById('adm-users-container');
+      if (list.length === 0) {
+        container.innerHTML = `<div style="text-align:center; padding:14px; font-size:12px; color:var(--text-muted);">لا يوجد أعضاء مطابقين للبحث.</div>`;
+        return;
+      }
+
       container.innerHTML = list.map(u => {
         const suspect = isUserMultiSuspect(u);
         const refLen = (u.referrals || []).length;
@@ -1549,17 +1686,17 @@
           <div class="user-row-card ${suspect ? 'suspect' : ''} ${u.banned ? 'banned' : ''}">
             <div style="display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:6px;">
               <div>
-                <strong style="font-size:13.5px; color:#fff;">${u.name}</strong>
-                <span style="font-size:10.5px; color:var(--text-muted);">(@${u.username})</span>
-                <div style="font-size:10.5px; color:#64748b;">ID: ${u.id} · بصمة: <span style="color:#cbd5e1;">${u.deviceHash}</span></div>
+                <strong style="font-size:13.5px; color:#fff;">${u.name || 'User'}</strong>
+                <span style="font-size:10.5px; color:var(--text-muted);">(@${u.username || 'none'})</span>
+                <div style="font-size:10.5px; color:#64748b;">ID: ${u.id} · بصمة: <span style="color:#cbd5e1;">${u.deviceHash || 'N/A'}</span></div>
               </div>
               <div>
                 ${u.banned ? '<span class="badge-tag" style="background:#ef4444; color:#fff;">محظور 🚫</span>' : (suspect ? '<span class="badge-tag" style="background:#f59e0b; color:#000;">⚠️ تعدد</span>' : '<span class="badge-tag" style="background:#10b981; color:#fff;">سليم ✅</span>')}
               </div>
             </div>
             <div class="grid-3" style="margin-bottom:6px; font-size:10.5px; text-align:center;">
-              <div class="sub-3d" style="padding:5px;">الرصيد: <strong>${Math.floor(u.mined)}</strong></div>
-              <div class="sub-3d" style="padding:5px;">Hold: <strong style="color:var(--gold-bright);">${Math.floor(u.hold)}</strong></div>
+              <div class="sub-3d" style="padding:5px;">الرصيد: <strong>${Math.floor(u.mined || 0)}</strong></div>
+              <div class="sub-3d" style="padding:5px;">Hold: <strong style="color:var(--gold-bright);">${Math.floor(u.hold || 0)}</strong></div>
               <div class="sub-3d" style="padding:5px;">الإحالات: <strong style="color:#38bdf8;">${refLen}</strong></div>
             </div>
             <div class="grid-3">
@@ -1585,7 +1722,7 @@
     }
 
     function inspectUserReferrals(userId) {
-      const u = usersDB.find(x => x.id == userId);
+      const u = usersDB.find(x => String(x.id) === String(userId));
       if (!u) return;
       document.getElementById('inspect-modal-title').innerText = `🔍 إحالات: ${u.name}`;
       const refs = u.referrals || [];
@@ -1603,7 +1740,7 @@
                 <span style="color:${isSameDev ? '#ef4444' : '#22c55e'}; font-weight:800;">${r.status}</span>
               </div>
               <div style="font-size:11px; color:var(--text-muted); margin-top:4px;">
-                بصمة الجهاز: <strong>${r.deviceHash}</strong> · اشترى: ${r.bought}
+                بصمة الجهاز: <strong>${r.deviceHash}</strong> · اشترى: ${r.bought || 0}
               </div>
             </div>
           `;
@@ -1612,47 +1749,64 @@
       document.getElementById('ref-inspect-modal').style.display = 'flex';
     }
 
-    function toggleBanUser(userId) {
-      const u = usersDB.find(x => x.id == userId);
-      if (!u) return;
-      u.banned = !u.banned;
-      localStorage.setItem('vksec_users_db', JSON.stringify(usersDB));
-      renderAdminUsersList();
-      applyUI();
-      showToast(u.banned ? `🚫 تم حظر ${u.name}` : `✅ تم فك الحظر عن ${u.name}`, u.banned ? "#ef4444" : "#10b981");
+    async function toggleBanUser(userId) {
+      const u = usersDB.find(x => String(x.id) === String(userId));
+      if (!u || !db) return;
+      const newBan = !u.banned;
+      await db.collection("players").doc(String(userId)).update({ banned: newBan });
+      showToast(newBan ? `🚫 تم حظر ${u.name} في Firebase!` : `✅ تم فك الحظر عن ${u.name}`, newBan ? "#ef4444" : "#10b981");
     }
 
-    function adminEditUserBal(userId) {
-      const u = usersDB.find(x => x.id == userId);
-      if (!u) return;
-      const newMined = prompt(`تعديل رصيد التعدين للمستخدم ${u.name}:`, u.mined);
+    async function adminEditUserBal(userId) {
+      const u = usersDB.find(x => String(x.id) === String(userId));
+      if (!u || !db) return;
+      const newMined = prompt(`تعديل رصيد التعدين (Mined) للمستخدم ${u.name}:`, u.mined || 0);
       if (newMined !== null && !isNaN(parseFloat(newMined))) {
-        u.mined = parseFloat(newMined);
-        if (u.id == tgUser.id) {
-          minedInApp = u.mined;
-          saveSecureBalances();
-        }
-        localStorage.setItem('vksec_users_db', JSON.stringify(usersDB));
-        renderAdminUsersList();
-        applyUI();
-        showToast("✅ تم تحديث الرصيد!");
+        const newHold = prompt(`تعديل رصيد المحفظة (Hold) للمستخدم ${u.name}:`, u.hold || 0);
+        const holdVal = (newHold !== null && !isNaN(parseFloat(newHold))) ? parseFloat(newHold) : (u.hold || 0);
+        await db.collection("players").doc(String(userId)).update({
+          mined: parseFloat(newMined),
+          hold: holdVal
+        });
+        showToast("✅ تم تحديث رصيد اللاعب في Firebase بنجاح!");
       }
     }
 
     function renderAdminWithdrawals() {
       const box = document.getElementById('adm-wd-requests-list');
-      if (wdHistory.length === 0) return;
-      box.innerHTML = wdHistory.map(w => `
+      if (allWithdrawalsDB.length === 0) {
+        box.innerHTML = "لا توجد طلبات سحب حالياً.";
+        return;
+      }
+      box.innerHTML = allWithdrawalsDB.map(w => `
         <div class="user-row-card" style="text-align:right;">
-          <div style="display:flex; justify-content:space-between; margin-bottom:6px;">
+          <div style="display:flex; justify-content:space-between; margin-bottom:4px;">
             <strong>${w.userName} (ID: ${w.userId})</strong>
             <span style="color:var(--gold-bright); font-weight:800;">${w.status}</span>
           </div>
-          <div style="font-size:12px; color:#cbd5e1;">
-            المبلغ: <strong>${w.amt.toLocaleString()}</strong> · الصافي بعد خصم 5%: <strong style="color:#22c55e;">${w.net.toLocaleString()} ${config.coinSym}</strong>
+          <div style="font-size:11px; color:#94a3b8; word-break:break-all; margin-bottom:4px; direction:ltr;">${w.walletAddr || ''}</div>
+          <div style="font-size:12px; color:#cbd5e1; margin-bottom:8px;">
+            المبلغ: <strong>${(w.amt || 0).toLocaleString()}</strong> · الصافي للدفع (بعد 5%): <strong style="color:#22c55e;">${(w.net || 0).toLocaleString()} ${config.coinSym}</strong>
+          </div>
+          <div class="grid-2">
+            <button class="btn-3d-gold btn-wd-approve" data-id="${w.docId}" style="padding:7px; font-size:11px;">✅ تم الدفع</button>
+            <button class="btn-3d-danger btn-wd-reject" data-id="${w.docId}" style="padding:7px; font-size:11px;">❌ رفض</button>
           </div>
         </div>
       `).join('');
+
+      box.querySelectorAll('.btn-wd-approve').forEach(b => {
+        b.addEventListener('click', async () => {
+          if (db) await db.collection("withdrawals").doc(b.getAttribute('data-id')).update({ status: "Approved ✅" });
+          showToast("✅ تم تأكيد حالة السحب!");
+        });
+      });
+      box.querySelectorAll('.btn-wd-reject').forEach(b => {
+        b.addEventListener('click', async () => {
+          if (db) await db.collection("withdrawals").doc(b.getAttribute('data-id')).update({ status: "Rejected ❌" });
+          showToast("❌ تم رفض طلب السحب!", "#ef4444");
+        });
+      });
     }
 
     function openOwnerDashboard() {
@@ -1671,8 +1825,7 @@
         document.getElementById('adm-botuser').value = config.botUsername;
         document.getElementById('adm-pin').value = config.adminPin;
 
-        renderAdminUsersList();
-        renderAdminWithdrawals();
+        startAdminRealtimeListeners();
         switchTab('admin');
       } else if (pin !== null) {
         SoundFX.error();
@@ -1691,7 +1844,7 @@
       });
     }
 
-    // ================= 9. ربط الأحداث =================
+    // ================= 9. ربط الأزرار والأحداث =================
     document.getElementById('sound-toggle-btn').addEventListener('click', () => {
       soundEnabled = !soundEnabled;
       document.getElementById('sound-toggle-btn').innerText = soundEnabled ? "🔊" : "🔇";
@@ -1699,7 +1852,6 @@
       showToast(soundEnabled ? "🔊 تم تفعيل الصوت" : "🔇 تم كتم الصوت");
     });
 
-    // قائمة اختيار اللغة المنسدلة
     const langBtn = document.getElementById('lang-menu-btn');
     const langDropdown = document.getElementById('lang-dropdown');
     langBtn.addEventListener('click', (e) => {
@@ -1720,7 +1872,6 @@
     });
 
     document.addEventListener('click', () => langDropdown.classList.remove('show'));
-
     document.getElementById('top-wallet-shortcut').addEventListener('click', () => switchTab('profile'));
 
     let logoTaps = 0, logoTimer = null;
@@ -1743,10 +1894,8 @@
       showToast("⚡ Turbo x2 Activated (5 Min)!");
     });
 
-    // جميع أزرار شراء العملة تفتح رابط STON.fi المحدد
     document.querySelectorAll('.btn-stonfi-buy').forEach(b => b.addEventListener('click', openStonfiSwap));
 
-    // أزرار ربط وإلغاء ربط المحفظة وفحص الرصيد
     document.getElementById('btn-connect-wallet').addEventListener('click', connectTonWallet);
     document.getElementById('btn-sync-hold').addEventListener('click', () => syncOnChainJettonHold(true));
     document.getElementById('btn-disconnect-wallet').addEventListener('click', disconnectTonWallet);
@@ -1754,13 +1903,12 @@
     document.getElementById('wd-input-amt').addEventListener('input', updateWdCalculation);
     document.getElementById('btn-request-wd').addEventListener('click', requestWithdrawal);
 
-    // المهام
     document.getElementById('btn-watch-ad').addEventListener('click', () => {
       if (adsWatched >= 10) { SoundFX.error(); return showToast("شاهدت الحد الأقصى اليوم!", "#ef4444"); }
       adsWatched++;
       minedInApp += 5;
       localStorage.setItem('vksec_ads', adsWatched);
-      saveSecureBalances();
+      savePlayerToCloud();
       SoundFX.collect();
       applyUI();
       showToast(`📺 +5 ${config.coinSym}!`);
@@ -1781,22 +1929,20 @@
         if (localStorage.getItem('vksec_task' + num)) return showToast("تم استلام المكافأة مسبقاً!", "#f59e0b");
         if (!chVisited[num]) { SoundFX.error(); return showToast("❌ افتح القناة واشترك أولاً!", "#ef4444"); }
         minedInApp += 50;
-        saveSecureBalances();
         localStorage.setItem('vksec_task' + num, 'true');
+        savePlayerToCloud();
         SoundFX.buySuccess();
         applyUI();
         showToast(`🎉 +50 ${config.coinSym}!`);
       });
     });
 
-    // تقليب المستويات
     document.getElementById('tier-btn-1').addEventListener('click', () => { currentLevelPage = 1; renderLevelsGrid(); });
     document.getElementById('tier-btn-2').addEventListener('click', () => { currentLevelPage = 4; renderLevelsGrid(); });
     document.getElementById('tier-btn-3').addEventListener('click', () => { currentLevelPage = 8; renderLevelsGrid(); });
     document.getElementById('btn-lvl-prev').addEventListener('click', () => { currentLevelPage = Math.max(1, currentLevelPage - 1); renderLevelsGrid(); });
     document.getElementById('btn-lvl-next').addEventListener('click', () => { currentLevelPage = Math.min(10, currentLevelPage + 1); renderLevelsGrid(); });
 
-    // الإحالات
     document.getElementById('btn-copy-ref').addEventListener('click', () => {
       const box = document.getElementById('ref-link-box');
       box.select();
@@ -1814,7 +1960,6 @@
       item.addEventListener('click', () => switchTab(item.getAttribute('data-tab')));
     });
 
-    // لوحة الأدمن
     document.getElementById('btn-close-admin').addEventListener('click', () => switchTab('mine'));
     document.getElementById('btn-close-inspect').addEventListener('click', () => {
       document.getElementById('ref-inspect-modal').style.display = 'none';
@@ -1837,7 +1982,7 @@
       });
     });
 
-    document.getElementById('btn-save-admin').addEventListener('click', () => {
+    document.getElementById('btn-save-admin').addEventListener('click', async () => {
       config.buySwapUrl = document.getElementById('adm-buy-url').value.trim() || defaultConfig.buySwapUrl;
       config.brandTitle = document.getElementById('adm-title').value.trim() || "$VIKING MINER";
       config.coinSym = document.getElementById('adm-sym').value.trim() || "$VIKING";
@@ -1855,15 +2000,18 @@
       const hBal = parseFloat(document.getElementById('adm-holdbal').value);
       if (!isNaN(hBal)) walletHold = hBal;
 
-      saveSecureBalances();
       localStorage.setItem('vksec_config', JSON.stringify(config));
+      await savePlayerToCloud();
+      if (db) {
+        try { await db.collection("settings").doc("global").set(config, { merge: true }); } catch (e) {}
+      }
       SoundFX.buySuccess();
       applyUI();
-      showToast("✅ تم حفظ جميع إعدادات البوت!");
+      showToast("☁️ تم حفظ الإعدادات في Firebase وتطبيقها على كل المستخدمين!");
     });
 
     document.getElementById('btn-reset-all').addEventListener('click', () => {
-      if (confirm("هل أنت متأكد من تصفير جميع البيانات؟")) {
+      if (confirm("هل أنت متأكد من تصفير البيانات المحلية؟")) {
         localStorage.clear();
         sessionStorage.clear();
         location.reload();
@@ -1871,6 +2019,7 @@
     });
 
     applyUI();
+    initCloudSync();
     setInterval(updateLiveMining, 100);
     updateLiveMining();
   })();
