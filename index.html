@@ -42,7 +42,6 @@
     .btn-3d-danger{width:100%;padding:10px;border-radius:14px;border:none;background:linear-gradient(180deg,#dc2626,#991b1b);color:#fff;font-size:12px;font-weight:800;cursor:pointer;box-shadow:0 4px 0 #450a0a;text-align:center}
     .btn-3d-dark{width:100%;padding:9px;border-radius:12px;border:1px solid rgba(255,255,255,.12);background:linear-gradient(180deg,#1e293b,#0f172a);color:#cbd5e1;font-size:11.5px;font-weight:700;cursor:pointer;text-align:center;box-shadow:0 3px 0 #05080f}
     .btn-3d-dark.tier-active{border-color:var(--gb);color:var(--gb);background:rgba(245,158,11,.15)}
-    /* بطاقات المستويات 3D المصلحة بالكامل */
     .miner-card-3d{background:linear-gradient(165deg,#1c2436,#0c1018);border-radius:16px;padding:10px;border-top:1.5px solid rgba(253,224,71,.35);border-left:1px solid rgba(245,158,11,.2);border-right:1px solid rgba(245,158,11,.2);border-bottom:4px solid #05070c;box-shadow:0 8px 16px rgba(0,0,0,.65);display:flex;flex-direction:column;justify-content:space-between}
     .miner-card-3d.active-lvl{border-color:var(--gb);box-shadow:0 0 18px rgba(245,158,11,.35)}
     .miner-art-3d{width:100%;height:86px;border-radius:12px;background:radial-gradient(circle at 50% 35%,#451a03,#090d16 80%);border:1px solid rgba(245,158,11,.3);box-shadow:inset 0 4px 10px rgba(0,0,0,.85);display:flex;flex-direction:column;align-items:center;justify-content:center;margin-bottom:8px;position:relative}
@@ -66,18 +65,26 @@
     .user-row-card.suspect{border-color:#f59e0b}
     .user-row-card.banned{border-color:#ef4444;opacity:.8}
     .badge-tag{display:inline-block;padding:2px 7px;border-radius:8px;font-size:10px;font-weight:800}
-    #boot-loader,#banned-screen{position:fixed;inset:0;background:#05070b;z-index:99999;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:24px;text-align:center}
-    #banned-screen{display:none}
+    #boot-loader{position:fixed;inset:0;background:#05070b;z-index:99999;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:24px;text-align:center;overflow:hidden}
+    #banned-screen{position:fixed;inset:0;background:#05070b;z-index:99999;display:none;flex-direction:column;align-items:center;justify-content:center;padding:24px;text-align:center}
     #toast{position:fixed;top:14px;left:50%;transform:translateX(-50%);background:#d97706;color:#fff;padding:8px 16px;border-radius:18px;font-size:12px;font-weight:800;display:none;z-index:100000;border:1px solid var(--gb);text-align:center;min-width:240px}
   </style>
 </head>
 <body oncontextmenu="return false;">
 
   <div id="boot-loader">
-    <div style="margin-bottom:10px;">
-      <svg width="54" height="54" viewBox="0 0 24 24" fill="none"><path d="M12 2L4 5v6.09c0 5.05 3.41 9.76 8 10.91 4.59-1.15 8-5.86 8-10.91V5l-8-3z" fill="#f59e0b" stroke="#fde047" stroke-width="1.5"/></svg>
+    <img src="viking-boot.jpg" alt="Viking" style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover;opacity:0.3;" onerror="this.style.display='none'">
+    <div style="position:absolute;inset:0;background:linear-gradient(180deg,rgba(5,7,11,0.2),rgba(5,7,11,0.95));"></div>
+    <div style="position:relative;z-index:2;width:80%;max-width:300px;">
+      <div style="margin-bottom:15px;">
+        <svg width="64" height="64" viewBox="0 0 24 24" fill="none"><path d="M12 2L4 5v6.09c0 5.05 3.41 9.76 8 10.91 4.59-1.15 8-5.86 8-10.91V5l-8-3z" fill="#f59e0b" stroke="#fde047" stroke-width="1.5"/></svg>
+      </div>
+      <div style="color:var(--gb);font-weight:900;font-size:22px;margin-bottom:15px;text-shadow:0 2px 10px #f59e0b;">$VIKING MINER</div>
+      <div style="width:100%;height:10px;background:#1e293b;border-radius:10px;overflow:hidden;border:1px solid #f59e0b;">
+        <div id="boot-progress" style="width:0%;height:100%;background:linear-gradient(90deg,#ea580c,#f59e0b,#fde047);transition:width 0.15s;"></div>
+      </div>
+      <div style="color:#cbd5e1;font-size:11px;margin-top:8px;">جاري التحميل...</div>
     </div>
-    <div style="color:var(--gb);font-weight:900;font-size:15px;">$VIKING SECURITY SHIELD...</div>
   </div>
 
   <div id="banned-screen">
@@ -89,7 +96,6 @@
   <div id="toast">Notification</div>
 
   <div class="app-shell" id="main-app-shell">
-    <!-- TOP BAR WITH PRO SVG ICONS -->
     <div class="top-bar">
       <div class="icon-3d" id="sound-toggle-btn">
         <svg id="svg-vol-on" width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M3 9v6h4l5 5V4L7 9H3zm13.5 3c0-1.77-1.02-3.29-2.5-4.03v8.05c1.48-.73 2.5-2.25 2.5-4.02zM14 3.23v2.06c2.89.86 5 3.54 5 6.71s-2.11 5.85-5 6.71v2.06c4.01-.91 7-4.49 7-8.77s-2.99-7.86-7-8.77z"/></svg>
@@ -111,7 +117,6 @@
       </div>
     </div>
 
-    <!-- 1. MINE PAGE -->
     <div id="page-mine" class="page active">
       <div class="card-3d" style="margin-bottom:0;">
         <div class="grid-2">
@@ -179,7 +184,6 @@
       </div>
     </div>
 
-    <!-- 2. TASKS PAGE -->
     <div id="page-tasks" class="page">
       <div class="card-3d">
         <h4 data-i18n="watch_ads_title">📺 Watch Telegram Video Ads</h4>
@@ -211,7 +215,6 @@
       </div>
     </div>
 
-    <!-- 3. BOOST PAGE (1-100 WITH PRO 3D CARDS & SVG EMBLEMS) -->
     <div id="page-boost" class="page">
       <div class="card-3d">
         <div style="display:flex;justify-content:space-between;margin-bottom:6px;">
@@ -241,7 +244,6 @@
       <div class="grid-2" id="levels-grid-container"></div>
     </div>
 
-    <!-- 4. FRIENDS PAGE (100% TRANSLATED IN EN/AR/RU) -->
     <div id="page-friends" class="page">
       <div class="card-3d">
         <h3 style="color:var(--gb);margin-bottom:6px;" data-i18n="ref_rule_title">⚠️ Referral System (+100 + 5% Mining)</h3>
@@ -262,9 +264,13 @@
           <button class="btn-3d-bronze" id="btn-share-ref">🔗 <span data-i18n="share_btn">Share</span></button>
         </div>
       </div>
+      <div class="card-3d">
+        <h4 style="margin-bottom:4px;">أرباح الإحالات المعلقة</h4>
+        <div style="font-size:24px;font-weight:900;color:var(--gb);margin-bottom:8px;" id="pending-ref-comm-display">0</div>
+        <button class="btn-3d-gold" id="btn-collect-ref">💰 جمع أرباح الإحالات</button>
+      </div>
     </div>
 
-    <!-- 5. PROFILE & WALLET PAGE -->
     <div id="page-profile" class="page">
       <div class="card-3d" style="display:flex;justify-content:space-between;align-items:center;">
         <div>
@@ -322,7 +328,6 @@
       </div>
     </div>
 
-    <!-- 6. HIDDEN OWNER ADMIN PANEL (5 TAPS ON LOGO) -->
     <div id="page-admin" class="page admin-wrap">
       <div class="card-3d">
         <div style="display:flex;justify-content:space-between;margin-bottom:8px;">
@@ -341,6 +346,7 @@
             <div class="sub-3d" style="color:#f59e0b;">تعدد: <strong id="stat-suspect-users">0</strong></div>
             <div class="sub-3d" style="color:#ef4444;">محظور: <strong id="stat-banned-users">0</strong></div>
           </div>
+          <div class="sub-3d" style="text-align:center;font-size:11px;margin-bottom:8px;color:#38bdf8;">نشط (24 ساعة): <strong id="stat-active-users">0</strong></div>
           <input type="text" id="adm-user-search" class="input-3d" placeholder="🔍 بحث بالاسم أو ID...">
           <div class="grid-3" style="margin-bottom:8px;">
             <button class="btn-3d-dark adm-filter-btn" data-filter="all">الكل</button>
@@ -350,13 +356,11 @@
           <div id="adm-users-container"></div>
         </div>
 
-        <!-- طلبات السحب المرقمة مع الموافقة والنشر التلقائي بدون فتح المحفظة -->
         <div id="adm-sub-wd" style="display:none;">
-          <p style="font-size:11px;color:var(--m);margin-bottom:8px;">بمجرد الضغط على (موافقة وإرسال تلقائي) يتم تنفيذ السحب من محفظة السحوبات ونشر الإثبات برقم السحب في قناتك فوراً بدون فتح المحفظة.</p>
+          <p style="font-size:11px;color:var(--m);margin-bottom:8px;">اضغط (دفع) لفتح محفظتك وإرسال المبلغ، ثم (تأكيد) لنشر الإثبات في القناة. أو اضغط (رفض) لإرجاع الرصيد للمستخدم.</p>
           <div id="adm-wd-requests-list">لا توجد طلبات سحب.</div>
         </div>
 
-        <!-- إعدادات التحكم الشامل -->
         <div id="adm-sub-set" style="display:none;">
           <div class="grid-2">
             <div><label>اسم البوت:</label><input type="text" id="adm-title" class="input-3d"></div>
@@ -364,7 +368,7 @@
           </div>
           <div class="grid-2">
             <div><label style="color:var(--gb);">ربح مستوى 1 باليوم:</label><input type="number" step="0.5" id="adm-lvl1-day" class="input-3d"></div>
-            <div><label style="color:var(--gb);">ربح مستوى 100 باليوم:</label><input type="number" step="1" id="adm-lvl100-day" class="input-3d"></div>
+            <div><label style="color:var(--gb);">ربح مستوى 100 (يُحسب تلقائياً 10%):</label><input type="text" id="adm-lvl100-day" class="input-3d" readonly style="background:#1e293b;color:#94a3b8;"></div>
           </div>
           <div class="grid-3">
             <div><label style="color:#38bdf8;">ربح الإعلان:</label><input type="number" id="adm-ad-rew" class="input-3d"></div>
@@ -381,10 +385,8 @@
             <div><label>شرط Hold للسحب%:</label><input type="number" id="adm-holdpct" class="input-3d"></div>
             <div><label>رسوم السحب%:</label><input type="number" id="adm-wdfee-pct" class="input-3d"></div>
           </div>
-          <label style="color:#22c55e;">👛 عنوان محفظة السحوبات التلقائية (Payout Wallet Address):</label>
+          <label style="color:#22c55e;">👛 عنوان محفظة السحوبات (Payout Wallet Address):</label>
           <input type="text" id="adm-payout-wallet" class="input-3d" placeholder="UQ..." style="direction:ltr;">
-          <label style="color:#22c55e;">⚡ رابط API الدفع التلقائي للمحفظة (اختياري للإرسال المباشر بالخلفية):</label>
-          <input type="text" id="adm-payout-webhook" class="input-3d" placeholder="https://your-worker.workers.dev/payout" style="direction:ltr;">
           <label style="color:var(--gb);">📺 معرف إعلانات تليجرام (Adsgram Block ID):</label>
           <input type="text" id="adm-adsgram-id" class="input-3d" placeholder="مثال: 4829 أو int-4829" style="direction:ltr;">
           <div class="grid-2">
@@ -392,15 +394,18 @@
             <div><label>📢 قناة إثبات السحب (@...):</label><input type="text" id="adm-payout-ch" class="input-3d" style="direction:ltr;" placeholder="@YGRAM1"></div>
           </div>
           <div class="grid-2">
-            <div><label>القناة 1 (للمهام):</label><input type="text" id="adm-ch1" class="input-3d" style="direction:ltr;"></div>
-            <div><label>القناة 2 (للمهام):</label><input type="text" id="adm-ch2" class="input-3d" style="direction:ltr;"></div>
+            <div><label>🆔 آيدي الأدمن (للإشعارات):</label><input type="text" id="adm-admin-chat" class="input-3d" style="direction:ltr;" placeholder="123456789"></div>
+            <div><label>📢 القناة 1 (للمهام):</label><input type="text" id="adm-ch1" class="input-3d" style="direction:ltr;"></div>
+          </div>
+          <div class="grid-2">
+            <div><label>📢 القناة 2 (للمهام):</label><input type="text" id="adm-ch2" class="input-3d" style="direction:ltr;"></div>
+            <div><label>👤 يوزر البوت (بدون @):</label><input type="text" id="adm-botuser" class="input-3d" style="direction:ltr;"></div>
           </div>
           <div class="grid-2">
             <div><label>رصيدك (Mined):</label><input type="number" id="adm-minebal" class="input-3d"></div>
             <div><label>رصيد محفظتك (Hold):</label><input type="number" id="adm-holdbal" class="input-3d"></div>
           </div>
           <div class="grid-2">
-            <div><label>يوزر البوت (بدون @):</label><input type="text" id="adm-botuser" class="input-3d" style="direction:ltr;"></div>
             <div><label>الرقم السري للأدمن:</label><input type="text" id="adm-pin" class="input-3d" style="direction:ltr;"></div>
           </div>
           <button class="btn-3d-gold" id="btn-save-admin">💾 حفظ وتطبيق على جميع المستخدمين</button>
@@ -409,7 +414,6 @@
     </div>
   </div>
 
-  <!-- BOTTOM NAV WITH PRO SVG ICONS -->
   <div class="bottom-nav-3d">
     <div class="nav-item active" data-tab="mine">
       <svg viewBox="0 0 24 24"><path d="M14.5 2.5L20 8l-1.5 1.5-1.8-1.8-3.2 3.2 4.9 4.9-1.4 1.4-4.9-4.9-6.6 6.6-1.4-1.4 6.6-6.6L5.8 6l1.4-1.4 4.9 4.9 3.2-3.2-1.8-1.8L14.5 2.5z"/></svg>
@@ -439,7 +443,6 @@
     const tg = window.Telegram?.WebApp;
     if (tg) tg.expand();
 
-    // 1. إنشاء ID فريد لكل مستخدم يدخل البوت حتى يظهر الجميع في Firebase
     let resolvedUser = tg?.initDataUnsafe?.user;
     if (!resolvedUser || !resolvedUser.id) {
       let savedGuest = JSON.parse(localStorage.getItem('vk_guest_profile') || "null");
@@ -454,13 +457,11 @@
     const CURRENT_UID = String(tgUser.id);
     const OFFICIAL_JETTON = "EQBah244kAnjZEDX9HOIit4BX3UoGFmvp-y013x-14U3PLpg";
 
-    // إظهار شاشة الحظر فوراً إن وجد دون إيقاف اتصال Firebase (ليتمكن من استقبال أمر فك الحظر فوراً)
     if (localStorage.getItem('vk_banned_' + CURRENT_UID) === '1') {
       document.getElementById('boot-loader').style.display = 'none';
       document.getElementById('banned-screen').style.display = 'flex';
     }
 
-    // 2. Firebase Init
     const firebaseConfig = {
       apiKey: "AIzaSyCzbpZMYhi9WWr4oCSV_xClquF8xcVfSUo",
       authDomain: "viking-miner.firebaseapp.com",
@@ -483,7 +484,6 @@
       localStorage.setItem('vk_device_fp', deviceFingerprint);
     }
 
-    // 3. Anti-Bot Validator
     let lastActionTs = 0;
     function isHumanClick(e) {
       if (navigator.webdriver) return false;
@@ -494,7 +494,6 @@
       return true;
     }
 
-    // 4. Sound Engine
     let soundEnabled = true, audioCtx = null;
     function playTone(freqs, type, dur) {
       if (!soundEnabled) return;
@@ -519,7 +518,6 @@
       error: () => playTone([160, 115], 'sawtooth', 0.22)
     };
 
-    // 5. Complete Translations (100% EN / AR / RU with zero mixed text)
     const I18N = {
       en: {
         mining_rate:"MINING RATE", current_rank:"WALLET LEVEL", claimed_in_app:"Claimed in the app",
@@ -594,21 +592,16 @@
       document.querySelectorAll('[data-i18n]').forEach(el => { const k = el.getAttribute('data-i18n'); if (d[k]) el.innerHTML = d[k]; });
     }
 
-    // 6. Custom 3D Viking SVG Emblems for Levels 1-100
     function getLevelArtSVG(lvl) {
       if (lvl <= 30) {
-        // Viking Runic Shield SVG
         return `<svg width="46" height="46" viewBox="0 0 64 64" fill="none"><circle cx="32" cy="32" r="26" fill="#78350f" stroke="#fde047" stroke-width="4"/><circle cx="32" cy="32" r="19" fill="#451a03" stroke="#f59e0b" stroke-width="2" stroke-dasharray="4 3"/><path d="M32 6v52M6 32h52" stroke="#fde047" stroke-width="3"/><circle cx="32" cy="32" r="7" fill="#fde047" stroke="#92400e" stroke-width="2"/></svg>`;
       } else if (lvl <= 70) {
-        // Viking Dual Battle Axes SVG
         return `<svg width="46" height="46" viewBox="0 0 64 64" fill="none"><path d="M14 52L50 16M50 52L14 16" stroke="#d97706" stroke-width="5" stroke-linecap="round"/><path d="M42 10c8 2 12 8 10 16-6-2-10-6-10-16zM22 10c-8 2-12 8-10 16 6-2 10-6 10-16z" fill="#fde047" stroke="#f59e0b" stroke-width="2"/><circle cx="32" cy="34" r="6" fill="#fde047"/></svg>`;
       } else {
-        // Valhalla Golden Horned Crown Helmet SVG
         return `<svg width="46" height="46" viewBox="0 0 64 64" fill="none"><path d="M12 28C6 20 8 10 16 8c-2 8 2 14 8 16M52 28c6-8 4-18-4-20 2 8-2 14-8 16" stroke="#fde047" stroke-width="4" stroke-linecap="round"/><path d="M18 32c0-10 6-16 14-16s14 6 14 16v14H18V32z" fill="#f59e0b" stroke="#fde047" stroke-width="3"/><path d="M32 16v28M18 36h28" stroke="#451a03" stroke-width="4"/></svg>`;
       }
     }
 
-    // 7. State & Config
     const defaultConfig = {
       brandTitle: "$VIKING MINER", coinSym: "$VIKING",
       lvl1PerDay: 250, lvl100PerDay: 10000,
@@ -617,6 +610,7 @@
       minWithdraw: 5000, holdPercentReq: 25, withdrawFeePercent: 5,
       payoutWallet: "", payoutWebhook: "",
       adsgramBlockId: "", botToken: "", payoutChannel: "@YGRAM1",
+      adminChatId: "",
       buySwapUrl: "https://app.ston.fi/swap?chartVisible=false&tt=EQBah244kAnjZEDX9HOIit4BX3UoGFmvp-y013x-14U3PLpg&ft=GRAM",
       channel1: "https://t.me/YGRAM1", channel2: "https://t.me/telegram", botUsername: "VIKINGMINER_BOT", adminPin: "202020"
     };
@@ -626,6 +620,8 @@
     let minedInApp = parseFloat(localStorage.getItem('vksec_mined')) || 0;
     let walletHold = parseFloat(localStorage.getItem('vksec_hold')) || 0;
     let lastCollectTime = parseInt(localStorage.getItem('vksec_last_collect')) || Date.now();
+    let lastWithdrawTime = 0;
+    let pendingRefComm = 0;
     let adsWatched = parseInt(localStorage.getItem('vksec_ads')) || 0;
     let linkedWalletAddr = localStorage.getItem('vksec_wallet_addr') || "";
     let refCommissionEarned = parseFloat(localStorage.getItem('vksec_ref_comm')) || 0;
@@ -635,14 +631,31 @@
     let LEVELS_DATA = [];
     let currentLevelPage = 1;
 
+    let bootProg = 0;
+    const bootTimer = setInterval(() => {
+      bootProg += Math.random() * 20;
+      if (bootProg > 95) bootProg = 95;
+      const el = document.getElementById('boot-progress');
+      if (el) el.style.width = bootProg + '%';
+    }, 150);
+    function finishBoot() {
+      clearInterval(bootTimer);
+      const el = document.getElementById('boot-progress');
+      if (el) el.style.width = '100%';
+      setTimeout(() => {
+        const loader = document.getElementById('boot-loader');
+        if (loader) loader.style.display = 'none';
+        const app = document.getElementById('main-app-shell');
+        if (app && app.style.display !== 'none') app.style.display = 'flex';
+      }, 400);
+    }
+
     function rebuildLevelsTable() {
       const minD = Number(config.lvl1PerDay) || 250;
-      const maxD = Number(config.lvl100PerDay) || 10000;
-      const stepD = (maxD - minD) / 99;
       LEVELS_DATA = Array.from({length: 100}, (_, idx) => {
         const i = idx + 1;
         const g = i <= 30 ? "Shieldbearer" : (i <= 70 ? "Berserker" : "Valhalla King");
-        const perDay = +(minD + (i - 1) * stepD).toFixed(2);
+        const perDay = +(minD * Math.pow(1.1, i - 1)).toFixed(2);
         const ths = +(perDay / 25).toFixed(3);
         const reqHold = i === 1 ? 0 : Math.round(Math.pow(i - 1, 1.8) * 100);
         return { level: i, name: `${g} ${i}`, reqHold, ths, perDay, groupName: g };
@@ -663,11 +676,20 @@
       setTimeout(() => t.style.display = 'none', 2600);
     }
 
-    // 8. Firebase Cloud Sync (Fixes New User Registration & Instant Unban)
+    function timeAgo(ts) {
+      if (!ts) return "غير معروف";
+      const diff = Date.now() - ts;
+      const mins = Math.floor(diff / 60000);
+      if (mins < 1) return "الآن";
+      if (mins < 60) return `منذ ${mins} دقيقة`;
+      const hrs = Math.floor(mins / 60);
+      if (hrs < 24) return `منذ ${hrs} ساعة`;
+      return `منذ ${Math.floor(hrs/24)} يوم`;
+    }
+
     async function initCloudSync() {
       if (!db) {
-        document.getElementById('boot-loader').style.display = 'none';
-        document.getElementById('main-app-shell').style.display = 'flex';
+        finishBoot();
         return;
       }
 
@@ -701,6 +723,9 @@
             invitedBy: validInv,
             refBonusPaid: false,
             refCommissionEarned: 0,
+            pendingRefComm: 0,
+            lastWithdrawTime: 0,
+            lastSeen: Date.now(),
             referrals: [],
             createdAt: Date.now()
           });
@@ -717,7 +742,6 @@
             }
           }
         } else {
-          // تحديث اسم وبصمة المستخدم عند الدخول لضمان ظهوره للأدمن دائماً
           await pRef.set({
             id: CURRENT_UID,
             name: tgUser.first_name || "Warrior",
@@ -728,9 +752,8 @@
         }
       } catch (e) {}
 
-      // الاستماع الفوري لحالة الحظر أو فك الحظر
       pRef.onSnapshot(doc => {
-        document.getElementById('boot-loader').style.display = 'none';
+        finishBoot();
         if (!doc.exists) {
           document.getElementById('main-app-shell').style.display = 'flex';
           return;
@@ -742,7 +765,6 @@
           document.getElementById('banned-screen').style.display = 'flex';
           return;
         } else {
-          // إذا قام الأدمن بفك الحظر، يُمسح الحظر من الجهاز فوراً ويفتح البوت!
           localStorage.removeItem('vk_banned_' + CURRENT_UID);
           document.getElementById('banned-screen').style.display = 'none';
           document.getElementById('main-app-shell').style.display = 'flex';
@@ -751,6 +773,8 @@
         if (typeof d.mined === 'number') minedInApp = d.mined;
         if (typeof d.hold === 'number') walletHold = d.hold;
         if (typeof d.refCommissionEarned === 'number') refCommissionEarned = d.refCommissionEarned;
+        if (typeof d.pendingRefComm === 'number') pendingRefComm = d.pendingRefComm;
+        if (typeof d.lastWithdrawTime === 'number') lastWithdrawTime = d.lastWithdrawTime;
         if (d.walletAddr !== undefined) linkedWalletAddr = d.walletAddr;
         invitedById = d.invitedBy || null;
         refBonusPaid = !!d.refBonusPaid;
@@ -770,11 +794,28 @@
       localStorage.setItem('vksec_hold', walletHold);
       localStorage.setItem('vksec_last_collect', lastCollectTime);
       if (!db) return;
+
+      if (linkedWalletAddr && linkedWalletAddr.length > 8) {
+        try {
+          const dupSnap = await db.collection("players").where("walletAddr", "==", linkedWalletAddr).get();
+          let isDup = false;
+          dupSnap.forEach(d => { if (d.id !== CURRENT_UID) isDup = true; });
+          if (isDup) {
+            showToast("❌ هذه المحفظة مربوطة بحساب آخر!", "#ef4444");
+            linkedWalletAddr = "";
+            localStorage.removeItem('vksec_wallet_addr');
+            applyUI();
+            return;
+          }
+        } catch(e) {}
+      }
+
       try {
         await db.collection("players").doc(CURRENT_UID).set({
           id: CURRENT_UID, name: tgUser.first_name || "Warrior", username: tgUser.username || "user",
           deviceHash: deviceFingerprint, mined: minedInApp, hold: walletHold,
-          lastCollectTime, walletAddr: linkedWalletAddr, updatedAt: Date.now()
+          lastCollectTime, walletAddr: linkedWalletAddr, lastWithdrawTime,
+          updatedAt: Date.now()
         }, { merge: true });
 
         const minReqHold = Number(config.refMinHold) || 100;
@@ -795,18 +836,46 @@
       } catch (e) {}
     }
 
-    // 9. TON Connect
+    async function collectReferralProfits(e) {
+      if (!isHumanClick(e)) return;
+      if (pendingRefComm <= 0) return showToast("لا توجد أرباح إحالات معلقة", "#f59e0b");
+      minedInApp += pendingRefComm;
+      const toCollect = pendingRefComm;
+      pendingRefComm = 0;
+      if (db) {
+        await db.collection("players").doc(CURRENT_UID).update({ pendingRefComm: 0, mined: firebase.firestore.FieldValue.increment(toCollect) });
+      }
+      await savePlayerToCloud();
+      SoundFX.buySuccess();
+      applyUI();
+      showToast(`💰 تم جمع ${toCollect.toFixed(4)} ${config.coinSym} من أرباح الإحالات!`);
+    }
+
     let tonConnectUI = null, userClickedConnect = false;
     try {
       tonConnectUI = new TON_CONNECT_UI.TonConnectUI({ manifestUrl: 'https://ton-connect.github.io/demo-dapp-with-react-ui/tonconnect-manifest.json', buttonRootId: 'ton-connect-container' });
-      tonConnectUI.onStatusChange(wallet => {
-        linkedWalletAddr = wallet?.account?.address || "";
-        if (linkedWalletAddr) {
+      tonConnectUI.onStatusChange(async wallet => {
+        const newAddr = wallet?.account?.address || "";
+        if (newAddr) {
+          if (db) {
+            try {
+              const snap = await db.collection("players").where("walletAddr", "==", newAddr).get();
+              let taken = false;
+              snap.forEach(d => { if (d.id !== CURRENT_UID) taken = true; });
+              if (taken) {
+                showToast("❌ هذه المحفظة مربوطة بحساب آخر!", "#ef4444");
+                try { await tonConnectUI.disconnect(); } catch(e) {}
+                return;
+              }
+            } catch(e) {}
+          }
+          linkedWalletAddr = newAddr;
           localStorage.setItem('vksec_wallet_addr', linkedWalletAddr);
           syncOnChainJettonHold(false);
           if (userClickedConnect) { userClickedConnect = false; SoundFX.buySuccess(); showToast("👛 Wallet Connected!"); }
         } else {
           localStorage.removeItem('vksec_wallet_addr');
+          linkedWalletAddr = "";
         }
         savePlayerToCloud(); applyUI();
       });
@@ -844,7 +913,6 @@
       } catch (e) {}
     }
 
-    // 10. Real Telegram Ads (Adsgram)
     async function showRealTelegramAd(onRewardCallback) {
       if (!config.adsgramBlockId || !config.adsgramBlockId.trim()) {
         SoundFX.error(); return showToast("⚠️ Adsgram Block ID not set in Admin Panel!", "#ef4444");
@@ -860,7 +928,6 @@
       }
     }
 
-    // 11. UI & 24h Cycle
     function applyUI() {
       applyTranslations();
       const { cur, next, onlyWalletHold } = getCurrentLevelObj();
@@ -894,8 +961,10 @@
       document.getElementById('ref-pending-count').innerText = myReferrals.length - verCount;
       document.getElementById('ref-verified-count').innerText = verCount;
       document.getElementById('ref-earned-total').innerText = Math.floor((verCount * config.refReward) + refCommissionEarned).toLocaleString();
-      // استخدام رابط Mini App المباشر (startapp) ليقرأ كود الإحالة تلقائياً بدون الحاجة لسيرفر بايثون
       document.getElementById('ref-link-box').value = `https://t.me/${config.botUsername}?startapp=ref_${CURRENT_UID}`;
+      
+      const prcEl = document.getElementById('pending-ref-comm-display');
+      if (prcEl) prcEl.innerText = pendingRefComm.toFixed(4);
 
       document.getElementById('prof-name').innerText = tgUser.first_name || "MANSAWY";
       document.getElementById('prof-username').innerText = tgUser.username ? "@" + tgUser.username : "@user";
@@ -977,7 +1046,7 @@
             if (invSnap.exists && invSnap.data().deviceHash !== deviceFingerprint) {
               const idata = invSnap.data();
               await invRef.update({
-                mined: (idata.mined || 0) + comm,
+                pendingRefComm: (idata.pendingRefComm || 0) + comm,
                 refCommissionEarned: (idata.refCommissionEarned || 0) + comm
               });
             }
@@ -1017,10 +1086,15 @@
       box.querySelectorAll('.btn-lck').forEach(b => b.addEventListener('click', openStonfiSwap));
     }
 
-    // 12. Numbered Withdrawals (#1, #2...) + Auto Payout & Telegram Proof Channel Post
     async function requestWithdrawal(e) {
       if (!isHumanClick(e)) return;
       if (!linkedWalletAddr) { SoundFX.error(); return showToast("❌ Connect TON Wallet first!", "#ef4444"); }
+      
+      if (lastWithdrawTime && Date.now() - lastWithdrawTime < 24 * 60 * 60 * 1000) {
+        const remHrs = Math.ceil((24 * 60 * 60 * 1000 - (Date.now() - lastWithdrawTime)) / 3600000);
+        return showToast(`⏳ يمكنك طلب سحب جديد بعد ${remHrs} ساعة!`, "#f59e0b");
+      }
+
       const amt = parseFloat(document.getElementById('wd-input-amt').value) || 0;
       if (amt < config.minWithdraw) return showToast(`⚠️ Minimum is ${config.minWithdraw}`, "#ef4444");
       const reqHold = Math.ceil(amt * (config.holdPercentReq / 100));
@@ -1028,7 +1102,9 @@
       if (amt > minedInApp) return showToast("❌ Insufficient mined balance!", "#ef4444");
 
       const fee = Math.ceil(amt * (config.withdrawFeePercent / 100));
-      minedInApp -= amt; await savePlayerToCloud();
+      minedInApp -= amt; 
+      lastWithdrawTime = Date.now();
+      await savePlayerToCloud();
 
       let nextWdNum = 1;
       if (db) {
@@ -1047,6 +1123,20 @@
           status: "Pending ⏳",
           timestamp: Date.now()
         });
+
+        if (config.botToken && config.adminChatId) {
+          try {
+            await fetch(`https://api.telegram.org/bot${config.botToken}/sendMessage`, {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({
+                chat_id: config.adminChatId,
+                text: `🔔 <b>طلب سحب جديد!</b>\n\n👤 اللاعب: ${tgUser.first_name}\n🆔 الآيدي: <code>${CURRENT_UID}</code>\n💰 المبلغ: ${amt} ${config.coinSym}\n💎 الصافي: ${amt - fee}\n👛 المحفظة: <code>${linkedWalletAddr}</code>`,
+                parse_mode: "HTML"
+              })
+            });
+          } catch(e) {}
+        }
       }
       SoundFX.buySuccess(); applyUI(); showToast(`✅ Withdrawal #${nextWdNum} Requested!`);
     }
@@ -1057,88 +1147,68 @@
       box.innerHTML = wdHistory.map(w => `<div style="display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px solid rgba(255,255,255,.06);direction:ltr;"><span><strong>#${w.wdNum || 1}</strong> · ${w.status} (Net: ${w.net})</span><strong style="color:#ef4444;">-${w.amt} 🪙</strong></div>`).join('');
     }
 
-    // 13. Admin Panel
     function isSuspect(u) { return usersDB.filter(x => x.deviceHash && x.deviceHash === u.deviceHash).length > 1; }
     function renderAdminUsersList() {
       const q = (document.getElementById('adm-user-search')?.value || "").toLowerCase();
       document.getElementById('stat-total-users').innerText = usersDB.length;
       document.getElementById('stat-suspect-users').innerText = usersDB.filter(isSuspect).length;
       document.getElementById('stat-banned-users').innerText = usersDB.filter(u => u.banned).length;
+      
+      const activeNow = usersDB.filter(u => u.lastSeen && (Date.now() - u.lastSeen < 24 * 60 * 60 * 1000)).length;
+      const activeEl = document.getElementById('stat-active-users');
+      if(activeEl) activeEl.innerText = activeNow;
+
       const list = usersDB.filter(u => ((u.name||"").toLowerCase().includes(q) || String(u.id).includes(q)) && (currentUserFilter==='all' || (currentUserFilter==='suspect'&&isSuspect(u)) || (currentUserFilter==='banned'&&u.banned)));
       const box = document.getElementById('adm-users-container');
-      box.innerHTML = list.map(u => `<div class="user-row-card ${isSuspect(u)?'suspect':''} ${u.banned?'banned':''}"><div style="display:flex;justify-content:space-between;margin-bottom:6px;"><div><strong>${u.name}</strong> (${u.id})<div style="font-size:10px;color:#94a3b8;">بصمة: ${u.deviceHash} · Hold: ${Math.floor(u.hold||0)} · إحالات: ${(u.referrals||[]).length}</div></div><span class="badge-tag" style="background:${u.banned?'#ef4444':'#10b981'};">${u.banned?'محظور 🚫':'نشط ✅'}</span></div><div class="grid-2"><button class="btn-3d-dark adm-ed" data-id="${u.id}">✏️ الرصيد (${Math.floor(u.mined||0)})</button><button class="btn-3d-dark adm-bn" data-id="${u.id}" style="color:${u.banned?'#22c55e':'#ef4444'};">${u.banned?'✅ فك الحظر فوراً':'🚫 حظر فوري'}</button></div></div>`).join('');
+      box.innerHTML = list.map(u => `<div class="user-row-card ${isSuspect(u)?'suspect':''} ${u.banned?'banned':''}"><div style="display:flex;justify-content:space-between;margin-bottom:6px;"><div><strong>${u.name}</strong> (${u.id})<div style="font-size:10px;color:#94a3b8;">آخر نشاط: ${timeAgo(u.lastSeen)} · إحالات: ${(u.referrals||[]).length}</div></div><span class="badge-tag" style="background:${u.banned?'#ef4444':'#10b981'};">${u.banned?'محظور 🚫':'نشط ✅'}</span></div><div class="grid-2"><button class="btn-3d-dark adm-ed" data-id="${u.id}">➕/➖ الرصيد (${Math.floor(u.mined||0)})</button><button class="btn-3d-dark adm-bn" data-id="${u.id}" style="color:${u.banned?'#22c55e':'#ef4444'};">${u.banned?'✅ فك الحظر':'🚫 حظر'}</button></div></div>`).join('');
+      
       box.querySelectorAll('.adm-ed').forEach(b => b.addEventListener('click', async () => {
-        const uid = b.getAttribute('data-id'), v = prompt("الرصيد الجديد (Mined):");
-        if (v !== null && !isNaN(parseFloat(v)) && db) await db.collection("players").doc(String(uid)).update({ mined: parseFloat(v) });
+        const uid = b.getAttribute('data-id');
+        const v = prompt("أدخل المبلغ (للإضافة اكتب رقم موجب زي 500، للخصم اكتب رقم سالب زي -500):");
+        if (v !== null && !isNaN(parseFloat(v)) && db) {
+          await db.collection("players").doc(String(uid)).update({ mined: firebase.firestore.FieldValue.increment(parseFloat(v)) });
+          showToast("✅ تم تعديل الرصيد!");
+        }
       }));
       box.querySelectorAll('.adm-bn').forEach(b => b.addEventListener('click', async () => {
         const uid = b.getAttribute('data-id'), u = usersDB.find(x => String(x.id) === String(uid));
         if (u && db) {
           const newBanState = !u.banned;
           await db.collection("players").doc(String(uid)).update({ banned: newBanState });
-          showToast(newBanState ? "🚫 تم حظر العضو فوراً!" : "✅ تم فك الحظر وفتح البوت للعضو فوراً!");
+          showToast(newBanState ? "🚫 تم حظر العضو!" : "✅ تم فك الحظر!");
         }
       }));
     }
 
-    // موافقة وإرسال السحب تلقائياً برقم السحب دون فتح تطبيق المحفظة + نشر الإثبات في القناة
-    async function approveAndSendPayout(w) {
-      const wdNumber = w.wdNum || 1;
-      const txUrl = `https://tonviewer.com/${w.walletAddr}?jetton=${OFFICIAL_JETTON}`;
-
-      // 1. إذا كان هناك Webhook دفع تلقائي مرتبط بمحفظة السحوبات، يرسل العملات في الخلفية فوراً
-      if (config.payoutWebhook && config.payoutWebhook.startsWith("http")) {
-        try {
-          await fetch(config.payoutWebhook, {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ wdNum: wdNumber, toAddress: w.walletAddr, amount: w.net, jetton: OFFICIAL_JETTON, fromWallet: config.payoutWallet })
-          });
-        } catch (e) {}
-      }
-
-      // 2. تحديث حالة السحب في Firebase
-      if (db && w.docId) {
-        await db.collection("withdrawals").doc(w.docId).update({ status: "Paid ✅", txLink: txUrl });
-      }
-
-      // 3. نشر إثبات السحب تلقائياً في قناة التليجرام برقم عملية السحب (#1, #2...) ورابط المعاملة
-      if (config.botToken && config.payoutChannel) {
-        const shortWallet = w.walletAddr ? (w.walletAddr.slice(0, 6) + "..." + w.walletAddr.slice(-6)) : "TON Wallet";
-        const proofText =
-          `✅ <b>إثبات سحب ناجح رقم #${wdNumber} | ${config.brandTitle}</b>\n\n` +
-          `🔢 <b>رقم العملية:</b> <code>#${wdNumber}</code>\n` +
-          `👤 <b>اللاعب:</b> ${w.userName} (<code>${String(w.userId).slice(0,4)}***</code>)\n` +
-          `💰 <b>المبلغ المسحوب:</b> ${w.amt.toLocaleString()} ${config.coinSym}\n` +
-          `💎 <b>الصافي المرسل:</b> ${w.net.toLocaleString()} ${config.coinSym}\n` +
-          `👛 <b>محفظة المستلم:</b> <code>${shortWallet}</code>\n` +
-          `🏦 <b>محفظة الدفع:</b> <code>${config.payoutWallet ? config.payoutWallet.slice(0,6)+'...' : 'Auto Payout Vault'}</code>`;
-
-        try {
-          await fetch(`https://api.telegram.org/bot${config.botToken}/sendMessage`, {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({
-              chat_id: config.payoutChannel,
-              text: proofText,
-              parse_mode: "HTML",
-              reply_markup: {
-                inline_keyboard: [
-                  [{ text: `🔗 رابط المعاملة #${wdNumber} (TX Link)`, url: txUrl }],
-                  [{ text: "⚔️ ابدأ التعدين الآن", url: `https://t.me/${config.botUsername}` }]
-                ]
-              }
-            })
-          });
-          SoundFX.buySuccess();
-          showToast(`📢 تم تنفيذ السحب #${wdNumber} ونشر الإثبات في القناة تلقائياً!`);
-        } catch (err) {
-          showToast(`✅ تم تأكيد السحب #${wdNumber}!`);
-        }
+    async function processPayout(w, isReject) {
+      if (!db || !w.docId) return;
+      if (isReject) {
+        await db.collection("withdrawals").doc(w.docId).update({ status: "Rejected ❌" });
+        const pRef = db.collection("players").doc(String(w.userId));
+        await pRef.update({ mined: firebase.firestore.FieldValue.increment(w.amt) });
+        SoundFX.error(); showToast("❌ تم رفض السحب وإرجاع الرصيد للمستخدم.");
       } else {
-        SoundFX.buySuccess();
-        showToast(`✅ تم اعتماد وإرسال السحب #${wdNumber} تلقائياً!`);
+        const txUrl = `https://tonviewer.com/${w.walletAddr}?jetton=${OFFICIAL_JETTON}`;
+        await db.collection("withdrawals").doc(w.docId).update({ status: "Paid ✅", txLink: txUrl });
+        
+        if (config.botToken && config.payoutChannel) {
+          const proofText = `✅ <b>إثبات سحب ناجح رقم #${w.wdNum}</b>\n\n👤 <b>اللاعب:</b> ${w.userName}\n💰 <b>المبلغ:</b> ${w.amt.toLocaleString()} ${config.coinSym}\n💎 <b>الصافي:</b> ${w.net.toLocaleString()} ${config.coinSym}\n👛 <b>المحفظة:</b> <code>${w.walletAddr.slice(0,6)}...${w.walletAddr.slice(-6)}</code>`;
+          try {
+            await fetch(`https://api.telegram.org/bot${config.botToken}/sendMessage`, {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({
+                chat_id: config.payoutChannel,
+                text: proofText,
+                parse_mode: "HTML",
+                reply_markup: { inline_keyboard: [[{ text: `🔗 رابط المعاملة`, url: txUrl }]] }
+              })
+            });
+          } catch(e) {}
+        }
+        SoundFX.buySuccess(); showToast(`✅ تم تأكيد الدفع #${w.wdNum} ونشر الإثبات!`);
       }
+      renderAdminWithdrawals();
     }
 
     function renderAdminWithdrawals() {
@@ -1148,24 +1218,33 @@
       box.innerHTML = allWithdrawalsDB.map(w => `
         <div class="user-row-card">
           <div style="display:flex;justify-content:space-between;margin-bottom:4px;">
-            <strong>🔢 سحب رقم #${w.wdNum || 1} — ${w.userName}</strong>
-            <span style="color:var(--gb);font-weight:800;">${w.status}</span>
+            <strong>🔢 سحب #${w.wdNum || 1} — ${w.userName}</strong>
+            <span style="color:${w.status.includes('Paid') ? '#22c55e' : (w.status.includes('Rejected') ? '#ef4444' : 'var(--gb)')};font-weight:800;">${w.status}</span>
           </div>
           <div style="font-size:10px;color:var(--m);word-break:break-all;direction:ltr;margin-bottom:6px;">${w.walletAddr}</div>
-          <div style="font-size:11.5px;margin-bottom:8px;">المبلغ: ${w.amt} · <strong>الصافي للدفع: <span style="color:#22c55e;">${w.net} ${config.coinSym}</span></strong></div>
-          <div class="grid-2">
-            <button class="btn-3d-gold adm-wd-ok" data-id="${w.docId}" style="padding:7px;font-size:11px;">✅ موافقة وإرسال تلقائي (#${w.wdNum || 1})</button>
-            <button class="btn-3d-danger adm-wd-no" data-id="${w.docId}" style="padding:7px;font-size:11px;">❌ رفض</button>
-          </div>
+          <div style="font-size:11.5px;margin-bottom:8px;">المبلغ: ${w.amt} · <strong>الصافي: <span style="color:#22c55e;">${w.net} ${config.coinSym}</span></strong></div>
+          ${w.status.includes('Pending') ? `
+          <div class="grid-3">
+            <button class="btn-3d-gold adm-wd-pay" data-id="${w.docId}" style="padding:7px;font-size:10px;">💸 دفع</button>
+            <button class="btn-3d-dark adm-wd-ok" data-id="${w.docId}" style="padding:7px;font-size:10px;color:#22c55e;">✅ تأكيد</button>
+            <button class="btn-3d-danger adm-wd-no" data-id="${w.docId}" style="padding:7px;font-size:10px;">❌ رفض</button>
+          </div>` : ''}
         </div>`).join('');
 
+      box.querySelectorAll('.adm-wd-pay').forEach(b => b.addEventListener('click', () => {
+        const item = allWithdrawalsDB.find(x => x.docId === b.getAttribute('data-id'));
+        if (item) {
+          const tonLink = `ton://transfer/${item.walletAddr}?jetton=${OFFICIAL_JETTON}&amount=${Math.floor(item.net * 1e9)}`;
+          window.open(tonLink, '_blank');
+        }
+      }));
       box.querySelectorAll('.adm-wd-ok').forEach(b => b.addEventListener('click', () => {
         const item = allWithdrawalsDB.find(x => x.docId === b.getAttribute('data-id'));
-        if (item) approveAndSendPayout(item);
+        if (item) processPayout(item, false);
       }));
-      box.querySelectorAll('.adm-wd-no').forEach(b => b.addEventListener('click', async () => {
-        const id = b.getAttribute('data-id');
-        if (db && id) await db.collection("withdrawals").doc(id).update({ status: "Rejected ❌" });
+      box.querySelectorAll('.adm-wd-no').forEach(b => b.addEventListener('click', () => {
+        const item = allWithdrawalsDB.find(x => x.docId === b.getAttribute('data-id'));
+        if (item) processPayout(item, true);
       }));
     }
 
@@ -1175,7 +1254,7 @@
         document.getElementById('adm-title').value = config.brandTitle;
         document.getElementById('adm-sym').value = config.coinSym;
         document.getElementById('adm-lvl1-day').value = config.lvl1PerDay;
-        document.getElementById('adm-lvl100-day').value = config.lvl100PerDay;
+        document.getElementById('adm-lvl100-day').value = LEVELS_DATA[99].perDay;
         document.getElementById('adm-ad-rew').value = config.adReward;
         document.getElementById('adm-ad-max').value = config.maxAdsPerDay;
         document.getElementById('adm-task-rew').value = config.taskReward;
@@ -1186,10 +1265,10 @@
         document.getElementById('adm-holdpct').value = config.holdPercentReq;
         document.getElementById('adm-wdfee-pct').value = config.withdrawFeePercent;
         document.getElementById('adm-payout-wallet').value = config.payoutWallet || "";
-        document.getElementById('adm-payout-webhook').value = config.payoutWebhook || "";
         document.getElementById('adm-adsgram-id').value = config.adsgramBlockId || "";
         document.getElementById('adm-bottoken').value = config.botToken || "";
         document.getElementById('adm-payout-ch').value = config.payoutChannel || "@YGRAM1";
+        document.getElementById('adm-admin-chat').value = config.adminChatId || "";
         document.getElementById('adm-ch1').value = config.channel1;
         document.getElementById('adm-ch2').value = config.channel2;
         document.getElementById('adm-minebal').value = Math.floor(minedInApp);
@@ -1220,7 +1299,6 @@
       [1, 2, 3].forEach(n => document.getElementById('tier-btn-' + n).classList.toggle('tier-active', n === activeNum));
     }
 
-    // 14. Event Bindings
     document.getElementById('sound-toggle-btn').addEventListener('click', () => {
       soundEnabled = !soundEnabled;
       document.getElementById('sound-toggle-btn').style.opacity = soundEnabled ? "1" : "0.45";
@@ -1236,6 +1314,7 @@
     document.getElementById('coin-3d-trigger').addEventListener('click', collectMining);
     document.getElementById('btn-collect-main').addEventListener('click', collectMining);
     document.getElementById('btn-goto-boost').addEventListener('click', () => switchTab('boost'));
+    document.getElementById('btn-collect-ref').addEventListener('click', collectReferralProfits);
 
     document.getElementById('btn-turbo').addEventListener('click', e => {
       if (!isHumanClick(e)) return;
@@ -1299,7 +1378,6 @@
       config.brandTitle = document.getElementById('adm-title').value.trim() || "$VIKING MINER";
       config.coinSym = document.getElementById('adm-sym').value.trim() || "$VIKING";
       config.lvl1PerDay = parseFloat(document.getElementById('adm-lvl1-day').value) || 250;
-      config.lvl100PerDay = parseFloat(document.getElementById('adm-lvl100-day').value) || 10000;
       config.adReward = parseFloat(document.getElementById('adm-ad-rew').value) || 5;
       config.maxAdsPerDay = parseInt(document.getElementById('adm-ad-max').value) || 10;
       config.taskReward = parseFloat(document.getElementById('adm-task-rew').value) || 50;
@@ -1310,10 +1388,10 @@
       config.holdPercentReq = parseInt(document.getElementById('adm-holdpct').value) || 25;
       config.withdrawFeePercent = parseFloat(document.getElementById('adm-wdfee-pct').value) || 5;
       config.payoutWallet = document.getElementById('adm-payout-wallet').value.trim();
-      config.payoutWebhook = document.getElementById('adm-payout-webhook').value.trim();
       config.adsgramBlockId = document.getElementById('adm-adsgram-id').value.trim();
       config.botToken = document.getElementById('adm-bottoken').value.trim();
       config.payoutChannel = document.getElementById('adm-payout-ch').value.trim() || "@YGRAM1";
+      config.adminChatId = document.getElementById('adm-admin-chat').value.trim();
       config.channel1 = document.getElementById('adm-ch1').value.trim() || "https://t.me/YGRAM1";
       config.channel2 = document.getElementById('adm-ch2').value.trim() || "https://t.me/telegram";
       config.botUsername = document.getElementById('adm-botuser').value.trim() || "VIKINGMINER_BOT";
@@ -1325,7 +1403,7 @@
       rebuildLevelsTable();
       await savePlayerToCloud();
       if (db) await db.collection("settings").doc("global").set(config, { merge: true });
-      SoundFX.buySuccess(); applyUI(); showToast("☁️ تم حفظ الإعدادات وتطبيقها على الجميع!");
+      SoundFX.buySuccess(); applyUI(); showToast("☁️ تم حفظ الإعدادات وتطبيقها!");
     });
 
     applyUI(); initCloudSync(); setInterval(updateLiveMining, 200); updateLiveMining();
