@@ -429,9 +429,6 @@
             <div><label>Your Mined Balance:</label><input type="number" id="adm-minebal" class="input-3d"></div>
             <div><label>Your Hold Balance:</label><input type="number" id="adm-holdbal" class="input-3d"></div>
           </div>
-          <div class="grid-2">
-            <div><label>Admin PIN:</label><input type="text" id="adm-pin" class="input-3d" style="direction:ltr;"></div>
-          </div>
           <button class="btn-3d-gold" id="btn-save-admin">💾 Save & Apply to All Users</button>
         </div>
       </div>
@@ -460,19 +457,16 @@
       <span data-i18n="nav_profile">Profile</span>
     </div>
   </div>
-
+    <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-auth-compat.js"></script>
   <script>
   (function() {
     "use strict";
     const tg = window.Telegram?.WebApp;
-    if (tg) {
-      tg.expand();
-      tg.ready();
-      if (tg.requestWriteAccess) {
-        tg.requestWriteAccess((granted) => { console.log("Write access:", granted); });
-      }
-    }
+    if (tg) { tg.expand(); tg.ready(); }
 
+    // ⚠️ ضع الآي دي الخاص بك هنا (صاحب التطبيق) ⚠️
+    const OWNER_UID = "7216746593"; 
+    
     let resolvedUser = tg?.initDataUnsafe?.user;
     if (!resolvedUser || !resolvedUser.id) {
       let savedGuest = JSON.parse(localStorage.getItem('vk_guest_profile') || "null");
@@ -500,10 +494,15 @@
       messagingSenderId: "593041882697",
       appId: "1:593041882697:web:5e66b81d5a620ddc1fc998"
     };
+    
     let db = null;
     try {
       if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
       db = firebase.firestore();
+      
+      // تفعيل Anonymous Auth لحماية قاعدة البيانات
+      firebase.auth().signInAnonymously().catch(e => console.error("Auth Error:", e));
+      
     } catch (e) {}
 
     let deviceFingerprint = localStorage.getItem('vk_device_fp');
@@ -559,7 +558,7 @@
         wallet_hold:"Wallet Hold (Speed Source)", mined_app:"Mined in App",
         buy_upgrade_btn:"Buy Official Token on STON.fi to Upgrade Speed",
         ref_rule_title:"⚠️ Referral System (5% Mining)",
-        ref_rule_desc:"1️⃣ Activation: Referral activates when your friend reaches Level 2 (holds 200+ coins from STON.fi).<br>2️⃣ 5% Mining Bonus: Every time your active friend collects their mining, you automatically receive 5% of their mined amount!",
+        ref_rule_desc:"1️⃣ Activation: Referral activates when your friend reaches Level 2.<br>2️⃣ 5% Mining Bonus: Every time your active friend collects, you get 5%!",
         ref_pending:"Pending", ref_verified:"Active", ref_earned:"5% Earned", copy_btn:"Copy Link", share_btn:"Share",
         my_referrals_title:"👥 My Invited Friends", pending_ref_title:"Pending Referral Profits", collect_ref_btn:"Collect Referral Profits",
         ton_wallet_title:"TON Blockchain Wallet", connect_wallet_btn:"Connect TON Wallet",
@@ -583,7 +582,7 @@
         wallet_hold:"رصيد المحفظة (مصدر السرعة)", mined_app:"رصيد البوت (للسحب)",
         buy_upgrade_btn:"اشترِ العملة الرسمية من STON.fi لرفع سرعتك",
         ref_rule_title:"⚠️ نظام الإحالات (5% تعدين)",
-        ref_rule_desc:"1️⃣ التفعيل: تتفعل الإحالة عندما يصل صديقك للمستوى 2 (يحتفظ بـ 200 عملة في محفظته من STON.fi).<br>2️⃣ ربح 5% مستمر: بعد تفعيل الإحالة، كلما قام صديقك بجمع التعدين تحصل أنت تلقائياً على 5% من مبلغ تعدينه!",
+        ref_rule_desc:"1️⃣ التفعيل: تتفعل الإحالة عندما يصل صديقك للمستوى 2.<br>2️⃣ ربح 5% مستمر: كلما جمع صديقك، تحصل أنت على 5%!",
         ref_pending:"معلق", ref_verified:"مفعل", ref_earned:"ربح 5%", copy_btn:"نسخ الرابط", share_btn:"مشاركة",
         my_referrals_title:"👥 أصدقائي المدعوون", pending_ref_title:"أرباح الإحالات المعلقة", collect_ref_btn:"جمع أرباح الإحالات",
         ton_wallet_title:"محفظة شبكة TON", connect_wallet_btn:"ربط محفظة TON الآن",
@@ -607,7 +606,7 @@
         wallet_hold:"В кошельке (Скорость)", mined_app:"В боте",
         buy_upgrade_btn:"Купить на STON.fi для увеличения скорости",
         ref_rule_title:"⚠️ Реферальная система (5% Майнинг)",
-        ref_rule_desc:"1️⃣ Активация: друг достигает Уровня 2 (держит от 200 монет на STON.fi).<br>2️⃣ Бонус 5%: каждый раз, когда активный друг собирает добычу, вы автоматически получаете 5% от его сбора!",
+        ref_rule_desc:"1️⃣ Активация: друг достигает Уровня 2.<br>2️⃣ Бонус 5%: каждый раз, когда друг собирает добычу, вы получаете 5%!",
         ref_pending:"Ожидание", ref_verified:"Активно", ref_earned:"Доход 5%", copy_btn:"Копировать", share_btn:"Поделиться",
         my_referrals_title:"👥 Мои рефералы", pending_ref_title:"Ожидаемый доход", collect_ref_btn:"Собрать доход",
         ton_wallet_title:"Кошелек TON", connect_wallet_btn:"Подключить TON Кошелек",
@@ -643,36 +642,33 @@
 
     const defaultConfig = {
       brandTitle: "$VIKING MINER", coinSym: "$VIKING",
-      lvl1PerDay: 250, lvl100PerDay: 10000,
       adReward: 5, maxAdsPerDay: 10, taskReward: 50,
-      refReward: 0, refClaimPercent: 5, refMinHold: 200,
+      refClaimPercent: 5, refMinHold: 200,
       minWithdraw: 5000, holdPercentReq: 25, withdrawFeePercent: 5,
-      payoutWallet: "", payoutWebhook: "",
-      adsgramBlockId: "", botToken: "", payoutChannel: "@YGRAM1",
+      payoutWallet: "", adsgramBlockId: "", botToken: "", payoutChannel: "@YGRAM1",
       adminChatId: "",
       buySwapUrl: "https://app.ston.fi/swap?chartVisible=false&tt=EQBah244kAnjZEDX9HOIit4BX3UoGFmvp-y013x-14U3PLpg&ft=GRAM",
-      channel1: "https://t.me/YGRAM1", channel2: "https://t.me/telegram", botUsername: "VIKINGMINER_BOT", adminPin: "202020"
+      channel1: "https://t.me/YGRAM1", channel2: "https://t.me/telegram", botUsername: "VIKINGMINER_BOT"
     };
     let config = Object.assign({}, defaultConfig, JSON.parse(localStorage.getItem('vksec_config') || "{}"));
-    config.buySwapUrl = defaultConfig.buySwapUrl;
 
-    let minedInApp = parseFloat(localStorage.getItem('vksec_mined')) || 0;
-    let walletHold = parseFloat(localStorage.getItem('vksec_hold')) || 0;
-    let lastCollectTime = parseInt(localStorage.getItem('vksec_last_collect')) || Date.now();
+    // State Variables (Strictly synced from Firestore)
+    let minedInApp = 0;
+    let walletHold = 0;
+    let lastCollectTime = Date.now();
+    let serverTimeOffset = 0; // To check for time manipulation
     let lastWithdrawTime = 0;
     let pendingRefComm = 0;
-    let adsWatched = parseInt(localStorage.getItem('vksec_ads')) || 0;
-    let linkedWalletAddr = localStorage.getItem('vksec_wallet_addr') || "";
-    let refCommissionEarned = parseFloat(localStorage.getItem('vksec_ref_comm')) || 0;
+    let adsWatched = 0;
+    let linkedWalletAddr = "";
+    let refCommissionEarned = 0;
     let invitedById = null, refBonusPaid = false;
     let wdHistory = [], myReferrals = [], usersDB = [], allWithdrawalsDB = [], currentUserFilter = 'all';
-    let turboUntil = parseInt(localStorage.getItem('vksec_turbo')) || 0;
-    let LEVELS_DATA = [];
-    let currentLevelPage = 1;
-    
     let dailyStreak = 0;
     let lastDailyCheckIn = 0;
+    
     const DAILY_REWARDS = [10, 20, 30, 50, 70, 100, 200];
+    let currentLevelPage = 1;
 
     let bootProg = 0;
     const bootTimer = setInterval(() => {
@@ -681,6 +677,7 @@
       const el = document.getElementById('boot-progress');
       if (el) el.style.width = bootProg + '%';
     }, 150);
+
     function finishBoot() {
       clearInterval(bootTimer);
       const el = document.getElementById('boot-progress');
@@ -704,18 +701,17 @@
         {req: 294000, day: 30400}, {req: 326000, day: 33600}
     ];
 
+    let LEVELS_DATA = [];
     function rebuildLevelsTable() {
       LEVELS_DATA = [];
       for (let i = 1; i <= 100; i++) {
         const g = i <= 30 ? "Shieldbearer" : (i <= 70 ? "Berserker" : "Valhalla King");
         let reqHold, perDay;
         if (i <= 30) {
-            reqHold = customLevels[i-1].req;
-            perDay = customLevels[i-1].day;
+            reqHold = customLevels[i-1].req; perDay = customLevels[i-1].day;
         } else {
             const prevLvl = LEVELS_DATA[i-2]; 
-            reqHold = Math.round(prevLvl.reqHold * 1.15);
-            perDay = Math.round(prevLvl.perDay * 1.12);
+            reqHold = Math.round(prevLvl.reqHold * 1.15); perDay = Math.round(prevLvl.perDay * 1.12);
         }
         const ths = +(perDay / 25).toFixed(3);
         LEVELS_DATA.push({ level: i, name: `${g} ${i}`, reqHold, ths, perDay, groupName: g });
@@ -724,10 +720,9 @@
     rebuildLevelsTable();
 
     function getCurrentLevelObj() {
-      const onlyWalletHold = walletHold;
       let cur = LEVELS_DATA[0];
-      for (const l of LEVELS_DATA) { if (onlyWalletHold >= l.reqHold) cur = l; else break; }
-      return { cur, next: LEVELS_DATA[Math.min(99, cur.level)] || cur, onlyWalletHold };
+      for (const l of LEVELS_DATA) { if (walletHold >= l.reqHold) cur = l; else break; }
+      return { cur, next: LEVELS_DATA[Math.min(99, cur.level)] || cur };
     }
 
     function showToast(msg, bg = "#d97706") {
@@ -742,14 +737,10 @@
       const mins = Math.floor(diff / 60000);
       if (mins < 1) return "Now";
       if (mins < 60) return `${mins}m ago`;
-      const hrs = Math.floor(mins / 60);
-      if (hrs < 24) return `${hrs}h ago`;
-      return `${Math.floor(hrs/24)}d ago`;
+      return `${Math.floor(mins / 60)}h ago`;
     }
 
-    function getUtcDay(ts) {
-      return Math.floor(ts / (1000 * 60 * 60 * 24));
-    }
+    function getUtcDay(ts) { return Math.floor(ts / (1000 * 60 * 60 * 24)); }
 
     function renderDailyLogin() {
       const container = document.getElementById('daily-streak-container');
@@ -760,69 +751,52 @@
 
       container.innerHTML = DAILY_REWARDS.map((rew, idx) => {
         const dayNum = idx + 1;
-        let boxClass = "daily-box";
-        let statusText = `+${rew}`;
-        
-        if (dayNum <= dailyStreak) {
-          boxClass += " claimed";
-          statusText = "✅";
-        } else if (dayNum === dailyStreak + 1 && !hasClaimedToday) {
-          boxClass += " active";
-        }
-
-        return `<div class="${boxClass}">
-          <span class="day-num">${dayNum}</span>
-          ${statusText}
-        </div>`;
+        let boxClass = "daily-box", statusText = `+${rew}`;
+        if (dayNum <= dailyStreak) { boxClass += " claimed"; statusText = "✅"; }
+        else if (dayNum === dailyStreak + 1 && !hasClaimedToday) { boxClass += " active"; }
+        return `<div class="${boxClass}"><span class="day-num">${dayNum}</span>${statusText}</div>`;
       }).join('');
 
       const btn = document.getElementById('btn-claim-daily');
-      if (hasClaimedToday) {
-        btn.disabled = true;
-        btn.style.opacity = 0.5;
-        btn.innerText = I18N[currentLang].claimed;
-      } else {
-        btn.disabled = false;
-        btn.style.opacity = 1;
-        btn.innerHTML = `💰 <span data-i18n="claim_daily_btn">${I18N[currentLang].claim_daily_btn}</span>`;
-      }
+      if (hasClaimedToday) { btn.disabled = true; btn.style.opacity = 0.5; btn.innerText = I18N[currentLang].claimed; }
+      else { btn.disabled = false; btn.style.opacity = 1; btn.innerHTML = `💰 ${I18N[currentLang].claim_daily_btn}`; }
     }
 
     async function claimDailyLogin(e) {
-      if (!isHumanClick(e)) return;
+      if (!isHumanClick(e) || !db) return;
       const todayUtc = getUtcDay(Date.now());
       const lastUtc = getUtcDay(lastDailyCheckIn);
-
       if (todayUtc === lastUtc) return showToast("Already claimed today!", "#ef4444");
 
-      if (lastUtc === todayUtc - 1) {
-        dailyStreak = (dailyStreak % 7) + 1;
-      } else {
-        dailyStreak = 1;
-      }
-
+      dailyStreak = (lastUtc === todayUtc - 1) ? (dailyStreak % 7) + 1 : 1;
       const reward = DAILY_REWARDS[dailyStreak - 1];
-      minedInApp += reward;
-      lastDailyCheckIn = Date.now();
-
-      if (db) {
+      
+      try {
         await db.collection("players").doc(CURRENT_UID).update({
           dailyStreak: dailyStreak,
-          lastDailyCheckIn: lastDailyCheckIn,
+          lastDailyCheckIn: Date.now(),
           mined: firebase.firestore.FieldValue.increment(reward)
         });
-      }
-      await savePlayerToCloud();
-      SoundFX.buySuccess();
-      applyUI();
-      showToast(`🎁 +${reward} ${config.coinSym} Daily Reward!`, "#10b981");
+        SoundFX.buySuccess();
+        showToast(`🎁 +${reward} ${config.coinSym} Daily Reward!`, "#10b981");
+      } catch(err) { showToast("Error claiming daily!", "#ef4444"); }
     }
-        async function initCloudSync() {
-      if (!db) {
-        finishBoot();
-        return;
-      }
 
+    // Security: Check time manipulation
+    function checkTimeIntegrity(clientTime) {
+      if (!db) return true;
+      const drift = Math.abs(clientTime - (Date.now() - serverTimeOffset));
+      if (drift > 300000) { // 5 minutes max drift
+        showToast("⚠️ System time mismatch! Please set time to Auto.", "#ef4444");
+        return false;
+      }
+      return true;
+    }
+
+    async function initCloudSync() {
+      if (!db) { finishBoot(); return; }
+
+      // تحديث الإعدادات (للكل يقرأ)
       db.collection("settings").doc("global").onSnapshot(doc => {
         if (doc.exists) {
           config = Object.assign({}, defaultConfig, doc.data());
@@ -831,6 +805,11 @@
           applyUI();
         }
       });
+
+      // التحقق من تلاعب الوقت (بمقارنة توقيت السيرفر)
+      db.collection("settings").doc("time").get().then(doc => {
+          if(doc.exists) serverTimeOffset = Date.now() - doc.data().now;
+      }).catch(e=>{});
 
       const pRef = db.collection("players").doc(CURRENT_UID);
       try {
@@ -841,25 +820,11 @@
           const validInv = (invId && invId !== CURRENT_UID) ? invId : null;
 
           await pRef.set({
-            id: CURRENT_UID,
-            name: tgUser.first_name || "Warrior",
-            username: tgUser.username || "user",
-            deviceHash: deviceFingerprint,
-            mined: minedInApp,
-            hold: walletHold,
-            lastCollectTime,
-            walletAddr: linkedWalletAddr,
-            banned: false,
-            invitedBy: validInv,
-            refBonusPaid: false,
-            refCommissionEarned: 0,
-            pendingRefComm: 0,
-            lastWithdrawTime: 0,
-            dailyStreak: 0,
-            lastDailyCheckIn: 0,
-            lastSeen: Date.now(),
-            referrals: [],
-            createdAt: Date.now()
+            id: CURRENT_UID, name: tgUser.first_name || "Warrior", username: tgUser.username || "user",
+            deviceHash: deviceFingerprint, mined: 0, hold: 0, lastCollectTime: Date.now(),
+            walletAddr: "", banned: false, invitedBy: validInv, refBonusPaid: false,
+            refCommissionEarned: 0, pendingRefComm: 0, lastWithdrawTime: 0,
+            dailyStreak: 0, lastDailyCheckIn: 0, lastSeen: Date.now(), referrals: [], createdAt: Date.now()
           });
 
           if (validInv) {
@@ -870,38 +835,18 @@
               if (!rArr.some(r => String(r.id) === CURRENT_UID)) {
                 rArr.push({ id: CURRENT_UID, name: tgUser.first_name || "Warrior", deviceHash: deviceFingerprint, status: idata.deviceHash === deviceFingerprint ? "⚠️ Duplicate" : "Pending ⏳", profit: 0 });
                 await invRef.update({ referrals: rArr });
-                
-                if (config.botToken) {
-                  fetch(`https://api.telegram.org/bot${config.botToken}/sendMessage`, {
-                    method: "POST",
-                    headers: { "Content-Type": "application/json" },
-                    body: JSON.stringify({
-                      chat_id: validInv,
-                      text: `🎉 <b>New user joined via your link!</b>\n\n👤 Name: ${tgUser.first_name}\n⏳ Status: Pending (waiting for Level 2)`
-                    })
-                  }).catch(e=>{});
-                }
               }
             }
           }
-        } else {
-          await pRef.set({
-            id: CURRENT_UID,
-            name: tgUser.first_name || "Warrior",
-            username: tgUser.username || "user",
-            deviceHash: deviceFingerprint,
-            lastSeen: Date.now()
-          }, { merge: true });
         }
       } catch (e) {}
 
+      // تحديث حالة المستخدم بالكامل من السيرفر (المرجع الوحيد)
       pRef.onSnapshot(doc => {
         finishBoot();
-        if (!doc.exists) {
-          document.getElementById('main-app-shell').style.display = 'flex';
-          return;
-        }
+        if (!doc.exists) { document.getElementById('main-app-shell').style.display = 'flex'; return; }
         const d = doc.data();
+        
         if (d.banned === true) {
           localStorage.setItem('vk_banned_' + CURRENT_UID, '1');
           document.getElementById('main-app-shell').style.display = 'none';
@@ -913,20 +858,31 @@
           document.getElementById('main-app-shell').style.display = 'flex';
         }
 
-        if (typeof d.mined === 'number') minedInApp = d.mined;
-        if (typeof d.hold === 'number') walletHold = d.hold;
-        if (typeof d.refCommissionEarned === 'number') refCommissionEarned = d.refCommissionEarned;
-        if (typeof d.pendingRefComm === 'number') pendingRefComm = d.pendingRefComm;
-        if (typeof d.lastWithdrawTime === 'number') lastWithdrawTime = d.lastWithdrawTime;
-        if (typeof d.dailyStreak === 'number') dailyStreak = d.dailyStreak;
-        if (typeof d.lastDailyCheckIn === 'number') lastDailyCheckIn = d.lastDailyCheckIn;
-        if (d.walletAddr !== undefined) linkedWalletAddr = d.walletAddr;
+        // تحديث المتغيرات المحلية من السيرفر
+        minedInApp = d.mined || 0;
+        walletHold = d.hold || 0;
+        lastCollectTime = d.lastCollectTime || Date.now();
+        refCommissionEarned = d.refCommissionEarned || 0;
+        pendingRefComm = d.pendingRefComm || 0;
+        lastWithdrawTime = d.lastWithdrawTime || 0;
+        dailyStreak = d.dailyStreak || 0;
+        lastDailyCheckIn = d.lastDailyCheckIn || 0;
+        linkedWalletAddr = d.walletAddr || "";
         invitedById = d.invitedBy || null;
         refBonusPaid = !!d.refBonusPaid;
         myReferrals = d.referrals || [];
+        
+        // تحديث الـ UI
         applyUI();
+        
+        // إخفاء زر الأدمن لو مش المالك
+        if (CURRENT_UID !== OWNER_UID) {
+            document.getElementById('lang-menu-btn').style.display = 'flex';
+        }
+
       });
 
+      // مراقبة السحوبات
       db.collection("withdrawals").where("userId", "==", CURRENT_UID).onSnapshot(snap => {
         wdHistory = []; snap.forEach(d => wdHistory.push(d.data()));
         wdHistory.sort((a, b) => (b.wdNum || 0) - (a.wdNum || 0));
@@ -935,11 +891,7 @@
     }
 
     async function savePlayerToCloud() {
-      localStorage.setItem('vksec_mined', minedInApp);
-      localStorage.setItem('vksec_hold', walletHold);
-      localStorage.setItem('vksec_last_collect', lastCollectTime);
       if (!db) return;
-
       if (linkedWalletAddr && linkedWalletAddr.length > 8) {
         try {
           const dupSnap = await db.collection("players").where("walletAddr", "==", linkedWalletAddr).get();
@@ -947,23 +899,20 @@
           dupSnap.forEach(d => { if (d.id !== CURRENT_UID) isDup = true; });
           if (isDup) {
             showToast("❌ This wallet is linked to another account!", "#ef4444");
-            linkedWalletAddr = "";
-            localStorage.removeItem('vksec_wallet_addr');
-            applyUI();
-            return;
+            linkedWalletAddr = ""; applyUI(); return;
           }
         } catch(e) {}
       }
 
       try {
-        await db.collection("players").doc(CURRENT_UID).set({
-          id: CURRENT_UID, name: tgUser.first_name || "Warrior", username: tgUser.username || "user",
-          deviceHash: deviceFingerprint, mined: minedInApp, hold: walletHold,
-          lastCollectTime, walletAddr: linkedWalletAddr, lastWithdrawTime,
-          dailyStreak, lastDailyCheckIn,
+        // نستخدم update مش set عشان نمنع تعديل الحقول الحساسة
+        await db.collection("players").doc(CURRENT_UID).update({
+          name: tgUser.first_name || "Warrior", username: tgUser.username || "user",
+          deviceHash: deviceFingerprint, walletAddr: linkedWalletAddr, lastWithdrawTime: lastWithdrawTime,
           updatedAt: Date.now()
-        }, { merge: true });
+        });
 
+        // فحص إذا كان المستخدم حقق شرط تفعيل الإحالة
         const reqHold = LEVELS_DATA[1].reqHold;
         if (invitedById && !refBonusPaid && linkedWalletAddr && walletHold >= reqHold) {
           refBonusPaid = true;
@@ -973,38 +922,20 @@
           if (invSnap.exists && invSnap.data().deviceHash !== deviceFingerprint) {
             const idata = invSnap.data();
             const updRefs = (idata.referrals || []).map(r => String(r.id) === CURRENT_UID ? Object.assign({}, r, { status: "Verified ✅" }) : r);
-            await invRef.update({
-              referrals: updRefs
-            });
-
-            if (config.botToken) {
-              fetch(`https://api.telegram.org/bot${config.botToken}/sendMessage`, {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({
-                  chat_id: invitedById,
-                  text: `✅ <b>Your referral is now active!</b>\n\n👤 Friend: ${tgUser.first_name}\n💰 You will now receive 5% of their mining profits!`
-                })
-              }).catch(e=>{});
-            }
+            await invRef.update({ referrals: updRefs });
           }
         }
       } catch (e) {}
     }
 
     async function collectReferralProfits(e) {
-      if (!isHumanClick(e)) return;
+      if (!isHumanClick(e) || !db) return;
       if (pendingRefComm <= 0) return showToast("No pending referral profits", "#f59e0b");
-      minedInApp += pendingRefComm;
       const toCollect = pendingRefComm;
-      pendingRefComm = 0;
-      if (db) {
+      try {
         await db.collection("players").doc(CURRENT_UID).update({ pendingRefComm: 0, mined: firebase.firestore.FieldValue.increment(toCollect) });
-      }
-      await savePlayerToCloud();
-      SoundFX.buySuccess();
-      applyUI();
-      showToast(`💰 Collected ${toCollect.toFixed(4)} ${config.coinSym}!`);
+        SoundFX.buySuccess(); showToast(`💰 Collected ${toCollect.toFixed(4)} ${config.coinSym}!`);
+      } catch(e) { showToast("Error!", "#ef4444"); }
     }
 
     let tonConnectUI = null, userClickedConnect = false;
@@ -1018,98 +949,89 @@
               const snap = await db.collection("players").where("walletAddr", "==", newAddr).get();
               let taken = false;
               snap.forEach(d => { if (d.id !== CURRENT_UID) taken = true; });
-              if (taken) {
-                showToast("❌ This wallet is linked to another account!", "#ef4444");
-                try { await tonConnectUI.disconnect(); } catch(e) {}
-                return;
-              }
+              if (taken) { showToast("❌ This wallet is linked to another account!", "#ef4444"); try { await tonConnectUI.disconnect(); } catch(e) {} return; }
             } catch(e) {}
           }
           linkedWalletAddr = newAddr;
-          localStorage.setItem('vksec_wallet_addr', linkedWalletAddr);
-          syncOnChainJettonHold(false);
+          savePlayerToCloud(); applyUI();
           if (userClickedConnect) { userClickedConnect = false; SoundFX.buySuccess(); showToast("👛 Wallet Connected!"); }
-        } else {
-          localStorage.removeItem('vksec_wallet_addr');
-          linkedWalletAddr = "";
         }
-        savePlayerToCloud(); applyUI();
       });
     } catch (e) {}
 
     async function connectTonWallet(e) {
       if (!isHumanClick(e)) return;
-      SoundFX.click(); userClickedConnect = true;
+      userClickedConnect = true;
       if (tonConnectUI) { try { if (tonConnectUI.connected) await tonConnectUI.disconnect(); await tonConnectUI.openModal(); } catch (err) {} }
     }
+    
     async function disconnectTonWallet(e) {
       if (!isHumanClick(e)) return;
-      SoundFX.click();
       try { if (tonConnectUI?.connected) await tonConnectUI.disconnect(); } catch (err) {}
       linkedWalletAddr = ""; walletHold = 0;
-      localStorage.removeItem('vksec_wallet_addr');
-      savePlayerToCloud(); applyUI(); showToast("🔌 Wallet Disconnected!");
+      if(db) await db.collection("players").doc(CURRENT_UID).update({walletAddr: "", hold: 0});
+      applyUI(); showToast("🔌 Wallet Disconnected!");
     }
+    
     function openStonfiSwap() { SoundFX.click(); window.open(config.buySwapUrl, '_blank'); }
 
     async function syncOnChainJettonHold(showNotification = true) {
       if (!linkedWalletAddr) { if (showNotification) showToast("❌ Connect TON Wallet first!", "#ef4444"); return; }
-      if (showNotification) showToast("🔄 Checking Official Token Balance...", "#0284c7");
+      if (showNotification) showToast("🔄 Checking Token Balance...", "#0284c7");
       try {
         const res = await fetch(`https://tonapi.io/v2/accounts/${encodeURIComponent(linkedWalletAddr)}/jettons/${OFFICIAL_JETTON}`);
         if (res.ok) {
           const data = await res.json();
           const decimals = data.jetton?.decimals || 9;
-          walletHold = parseFloat(data.balance || "0") / Math.pow(10, decimals);
-          await savePlayerToCloud(); applyUI();
-          if (showNotification) { SoundFX.buySuccess(); showToast(`✅ Hold Synced: ${Math.floor(walletHold).toLocaleString()} ${config.coinSym}!`); }
+          const newHold = parseFloat(data.balance || "0") / Math.pow(10, decimals);
+          
+          if(db) await db.collection("players").doc(CURRENT_UID).update({ hold: newHold });
+          
+          if (showNotification) { SoundFX.buySuccess(); showToast(`✅ Hold Synced: ${Math.floor(newHold).toLocaleString()} ${config.coinSym}!`); }
           return;
         }
-        if (showNotification) showToast("ℹ️ Token Hold is 0", "#f59e0b");
       } catch (e) {}
     }
 
     async function showRealTelegramAd(onRewardCallback) {
-      if (!config.adsgramBlockId || !config.adsgramBlockId.trim()) {
-        SoundFX.error(); return showToast("⚠️ Adsgram Block ID not set in Admin Panel!", "#ef4444");
-      }
+      if (!config.adsgramBlockId || !config.adsgramBlockId.trim()) { SoundFX.error(); return showToast("⚠️ Adsgram Block ID not set!", "#ef4444"); }
       if (!window.Adsgram) { SoundFX.error(); return showToast("⚠️ Telegram Ads SDK loading...", "#ef4444"); }
       try {
         const AdController = window.Adsgram.init({ blockId: config.adsgramBlockId.trim() });
         const result = await AdController.show();
         if (result && result.done) onRewardCallback();
         else { SoundFX.error(); showToast("❌ Watch full ad to earn reward!", "#ef4444"); }
-      } catch (err) {
-        SoundFX.error(); showToast("❌ No ads available right now!", "#ef4444");
-      }
+      } catch (err) { SoundFX.error(); showToast("❌ No ads available!", "#ef4444"); }
     }
 
     function applyUI() {
       applyTranslations();
-      const { cur, next, onlyWalletHold } = getCurrentLevelObj();
-      const mult = Date.now() < turboUntil ? 2 : 1;
+      const { cur, next } = getCurrentLevelObj();
+      
+      // إخفاء زر الأدمن للغير مصرح لهم
+      document.getElementById('adm-sub-users').style.display = 'none';
+      document.getElementById('adm-sub-wd').style.display = 'none';
+      document.getElementById('adm-sub-set').style.display = 'none';
 
       document.getElementById('ui-brand-title').innerText = config.brandTitle;
       document.querySelectorAll('.coin-sym').forEach(el => el.innerText = config.coinSym);
       document.getElementById('ui-ad-rew').innerText = config.adReward;
       document.querySelectorAll('.ui-task-rew').forEach(el => el.innerText = config.taskReward);
 
-      document.getElementById('mine-ths').innerText = (cur.ths * mult).toFixed(3) + " TH/s";
+      document.getElementById('mine-ths').innerText = (cur.ths).toFixed(3) + " TH/s";
       document.getElementById('mine-lvl-txt').innerText = "Level " + cur.level;
       document.getElementById('mine-rank-title').innerText = cur.name;
       document.getElementById('mine-claimed-total').innerText = Math.floor(minedInApp).toLocaleString();
-      document.getElementById('mine-day-rate').innerText = `${(cur.perDay * mult).toFixed(2)} ${config.coinSym}/d`;
-      document.getElementById('mine-to-go').innerText = `Hold: ${Math.floor(onlyWalletHold).toLocaleString()} ${config.coinSym}`;
-
-      document.getElementById('ads-watched-txt').innerText = `${adsWatched}/${config.maxAdsPerDay}`;
-      document.getElementById('ads-prog-bar').style.width = Math.min(100, (adsWatched / config.maxAdsPerDay) * 100) + "%";
+      document.getElementById('mine-day-rate').innerText = `${cur.perDay.toFixed(2)} ${config.coinSym}/d`;
+      document.getElementById('mine-to-go').innerText = `Hold: ${Math.floor(walletHold).toLocaleString()} ${config.coinSym}`;
 
       document.getElementById('boost-lvl-header').innerText = "Level " + cur.level;
       document.getElementById('boost-rank-badge').innerText = cur.groupName + "s";
       document.getElementById('boost-pnl-txt').innerText = `+${cur.perDay} ${config.coinSym}/d (${cur.ths} TH/s)`;
       document.getElementById('boost-wallet-bal').innerText = Math.floor(walletHold).toLocaleString();
       document.getElementById('boost-app-bal').innerText = Math.floor(minedInApp).toLocaleString();
-      const toGo = Math.max(0, Math.ceil(next.reqHold - onlyWalletHold));
+      
+      const toGo = Math.max(0, Math.ceil(next.reqHold - walletHold));
       document.getElementById('boost-needed-txt').innerText = cur.level < 100 ? `Need ${toGo.toLocaleString()} more ${config.coinSym} in Connected Wallet for Level ${next.level}.` : "MAX LEVEL 100!";
       renderLevelsGrid();
 
@@ -1121,20 +1043,6 @@
       
       const prcEl = document.getElementById('pending-ref-comm-display');
       if (prcEl) prcEl.innerText = pendingRefComm.toFixed(4);
-
-      const refListBox = document.getElementById('my-referrals-list');
-      if (refListBox) {
-         if (myReferrals.length === 0) {
-             refListBox.innerHTML = `<div style="text-align:center;color:#94a3b8;">No friends invited yet.</div>`;
-         } else {
-             refListBox.innerHTML = myReferrals.map(r => `
-               <div style="display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px solid #1e293b;">
-                 <span>${r.name} <span style="font-size:9px;color:${r.status.includes('Verified') ? '#22c55e' : '#f59e0b'};">(${r.status})</span></span>
-                 <strong style="color:var(--gb);">+${(r.profit || 0).toFixed(2)} ${config.coinSym}</strong>
-               </div>
-             `).join('');
-         }
-      }
       
       renderDailyLogin();
 
@@ -1171,7 +1079,14 @@
     function updateLiveMining() {
       const { cur } = getCurrentLevelObj();
       const dict = I18N[currentLang] || I18N.en;
-      const perSec = (cur.perDay * (Date.now() < turboUntil ? 2 : 1)) / 86400;
+      const perSec = (cur.perDay) / 86400;
+      
+      // كشف التلاعب بالوقت
+      if (Date.now() < lastCollectTime - 60000) { 
+          // لو الجهاز اتأخر لورا فجأة
+          lastCollectTime = Date.now(); 
+      }
+
       const rawElapsed = Math.max(0, (Date.now() - lastCollectTime) / 1000);
       const cappedElapsed = Math.min(86400, rawElapsed);
       const pct24h = Math.min(100, (cappedElapsed / 86400) * 100);
@@ -1195,46 +1110,55 @@
     }
 
     async function collectMining(e) {
-      if (!isHumanClick(e)) return;
+      if (!isHumanClick(e) || !db) return;
+      
+      // التحقق من التلاعب بالوقت قبل الجمع
+      if (!checkTimeIntegrity(Date.now())) return;
+
       const { cur } = getCurrentLevelObj();
       const rawElapsed = Math.max(0, (Date.now() - lastCollectTime) / 1000);
-      if (rawElapsed < 10) { SoundFX.error(); return showToast("⏳ Wait at least 10s between collects!", "#f59e0b"); }
+      
+      if (rawElapsed < 10) { SoundFX.error(); return showToast("⏳ Wait at least 10s!", "#f59e0b"); }
+      // منع جمع مبالغ ضخمة لو المستخدم قدم الساعة
+      if (rawElapsed > 90000) { 
+          showToast("⚠️ Time anomaly detected. Cannot collect.", "#ef4444"); 
+          return; 
+      }
 
       const cappedElapsed = Math.min(86400, rawElapsed);
-      const pending = cappedElapsed * ((cur.perDay * (Date.now() < turboUntil ? 2 : 1)) / 86400);
+      const pending = cappedElapsed * (cur.perDay / 86400);
 
-      minedInApp += pending;
-      lastCollectTime = Date.now();
-      SoundFX.collect();
-      await savePlayerToCloud();
+      try {
+        // تحديث آمن باستخدام increment
+        await db.collection("players").doc(CURRENT_UID).update({
+          mined: firebase.firestore.FieldValue.increment(pending),
+          lastCollectTime: Date.now() 
+        });
+        SoundFX.collect();
+        showToast(`⚔️ +${pending.toFixed(4)} ${config.coinSym}!`);
 
-      const minReqHold = LEVELS_DATA[1].reqHold; 
-      if (db && invitedById && linkedWalletAddr && walletHold >= minReqHold) {
-        const comm = +(pending * ((Number(config.refClaimPercent) || 5) / 100)).toFixed(4);
-        if (comm > 0) {
-          try {
+        // توزيع أرباح الإحالة
+        const minReqHold = LEVELS_DATA[1].reqHold; 
+        if (invitedById && linkedWalletAddr && walletHold >= minReqHold) {
+          const comm = +(pending * ((Number(config.refClaimPercent) || 5) / 100)).toFixed(4);
+          if (comm > 0) {
             const invRef = db.collection("players").doc(String(invitedById));
             const invSnap = await invRef.get();
             if (invSnap.exists && invSnap.data().deviceHash !== deviceFingerprint) {
               const idata = invSnap.data();
               const updRefs = (idata.referrals || []).map(r => {
-                  if (String(r.id) === CURRENT_UID) {
-                      return { ...r, profit: (r.profit || 0) + comm };
-                  }
+                  if (String(r.id) === CURRENT_UID) return { ...r, profit: (r.profit || 0) + comm };
                   return r;
               });
               await invRef.update({
-                pendingRefComm: (idata.pendingRefComm || 0) + comm,
-                refCommissionEarned: (idata.refCommissionEarned || 0) + comm,
+                pendingRefComm: firebase.firestore.FieldValue.increment(comm),
+                refCommissionEarned: firebase.firestore.FieldValue.increment(comm),
                 referrals: updRefs
               });
             }
-          } catch (err) {}
+          }
         }
-      }
-
-      applyUI();
-      showToast(`⚔️ +${pending.toFixed(4)} ${config.coinSym}!`);
+      } catch (err) { showToast("Error collecting!", "#ef4444"); }
     }
 
     function renderLevelsGrid() {
@@ -1258,84 +1182,62 @@
                 <span style="color:var(--gb);font-weight:800;">⚡ +${it.ths} TH/s</span>
                 <span style="color:var(--m);">${it.perDay}/d</span>
               </div>
-            </div>
-            ${btn}
+            </div>${btn}
           </div>`;
       }).join('');
       box.querySelectorAll('.btn-lck').forEach(b => b.addEventListener('click', openStonfiSwap));
     }
 
     async function requestWithdrawal(e) {
-      if (!isHumanClick(e)) return;
+      if (!isHumanClick(e) || !db) return;
       if (!linkedWalletAddr) { SoundFX.error(); return showToast("❌ Connect TON Wallet first!", "#ef4444"); }
       
       if (lastWithdrawTime && Date.now() - lastWithdrawTime < 24 * 60 * 60 * 1000) {
         const remHrs = Math.ceil((24 * 60 * 60 * 1000 - (Date.now() - lastWithdrawTime)) / 3600000);
-        return showToast(`⏳ You can request a new withdrawal in ${remHrs} hours!`, "#f59e0b");
+        return showToast(`⏳ You can request in ${remHrs} hours!`, "#f59e0b");
       }
 
       const amt = parseFloat(document.getElementById('wd-input-amt').value) || 0;
       if (amt < config.minWithdraw) return showToast(`⚠️ Minimum is ${config.minWithdraw}`, "#ef4444");
       const reqHold = Math.ceil(amt * (config.holdPercentReq / 100));
       if (walletHold < reqHold) { openStonfiSwap(); return showToast(`🔒 Need ${reqHold} in Wallet Hold!`, "#ef4444"); }
-      if (amt > minedInApp) return showToast("❌ Insufficient mined balance!", "#ef4444");
+      if (amt > minedInApp) return showToast("❌ Insufficient balance!", "#ef4444");
 
       const fee = Math.ceil(amt * (config.withdrawFeePercent / 100));
-      minedInApp -= amt; 
-      lastWithdrawTime = Date.now();
-      await savePlayerToCloud();
+      
+      try {
+        let nextWdNum = 1;
+        const allSnap = await db.collection("withdrawals").get();
+        nextWdNum = allSnap.size + 1;
 
-      let nextWdNum = 1;
-      if (db) {
-        try {
-          const allSnap = await db.collection("withdrawals").get();
-          nextWdNum = allSnap.size + 1;
-        } catch (err) {}
         await db.collection("withdrawals").add({
-          wdNum: nextWdNum,
-          userId: CURRENT_UID,
-          userName: tgUser.first_name || "Viking",
-          walletAddr: linkedWalletAddr,
-          amt,
-          net: amt - fee,
-          fee,
-          status: "Pending ⏳",
-          timestamp: Date.now()
+          wdNum: nextWdNum, userId: CURRENT_UID, userName: tgUser.first_name || "Viking",
+          walletAddr: linkedWalletAddr, amt, net: amt - fee, fee, status: "Pending ⏳", timestamp: Date.now()
         });
 
-        if (config.botToken && config.adminChatId) {
-          try {
-            await fetch(`https://api.telegram.org/bot${config.botToken}/sendMessage`, {
-              method: "POST",
-              headers: { "Content-Type": "application/json" },
-              body: JSON.stringify({
-                chat_id: config.adminChatId,
-                text: `🔔 <b>New Withdrawal Request!</b>\n\n👤 Player: ${tgUser.first_name}\n🆔 ID: <code>${CURRENT_UID}</code>\n💰 Amount: ${amt} ${config.coinSym}\n💎 Net: ${amt - fee}\n👛 Wallet: <code>${linkedWalletAddr}</code>`,
-                parse_mode: "HTML"
-              })
-            });
-          } catch(e) {}
-        }
-      }
-      SoundFX.buySuccess(); applyUI(); showToast(`✅ Withdrawal #${nextWdNum} Requested!`);
+        await db.collection("players").doc(CURRENT_UID).update({ 
+            mined: firebase.firestore.FieldValue.increment(-amt),
+            lastWithdrawTime: Date.now()
+        });
+
+        SoundFX.buySuccess(); showToast(`✅ Withdrawal #${nextWdNum} Requested!`);
+      } catch(e) { showToast("Error requesting withdrawal", "#ef4444"); }
     }
 
     function renderWithdrawHistory() {
       const box = document.getElementById('wd-history-box');
-      if (!wdHistory.length) return;
+      if (!wdHistory.length) { box.innerHTML = "No withdrawals yet."; return; }
       box.innerHTML = wdHistory.map(w => `<div style="display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px solid rgba(255,255,255,.06);direction:ltr;"><span><strong>#${w.wdNum || 1}</strong> · ${w.status} (Net: ${w.net})</span><strong style="color:#ef4444;">-${w.amt} 🪙</strong></div>`).join('');
     }
 
     function isSuspect(u) { return usersDB.filter(x => x.deviceHash && x.deviceHash === u.deviceHash).length > 1; }
+    
     function renderAdminUsersList() {
       const q = (document.getElementById('adm-user-search')?.value || "").toLowerCase();
       document.getElementById('stat-total-users').innerText = usersDB.length;
       document.getElementById('stat-suspect-users').innerText = usersDB.filter(isSuspect).length;
       document.getElementById('stat-banned-users').innerText = usersDB.filter(u => u.banned).length;
-      
-      const activeNow = usersDB.filter(u => u.lastSeen && (Date.now() - u.lastSeen < 24 * 60 * 60 * 1000)).length;
-      const activeEl = document.getElementById('stat-active-users');
-      if(activeEl) activeEl.innerText = activeNow;
+      document.getElementById('stat-active-users').innerText = usersDB.filter(u => u.lastSeen && (Date.now() - u.lastSeen < 24 * 60 * 60 * 1000)).length;
 
       const list = usersDB.filter(u => ((u.name||"").toLowerCase().includes(q) || String(u.id).includes(q)) && (currentUserFilter==='all' || (currentUserFilter==='suspect'&&isSuspect(u)) || (currentUserFilter==='banned'&&u.banned)));
       const box = document.getElementById('adm-users-container');
@@ -1343,7 +1245,7 @@
       
       box.querySelectorAll('.adm-ed').forEach(b => b.addEventListener('click', async () => {
         const uid = b.getAttribute('data-id');
-        const v = prompt("Enter amount (for add use positive e.g. 500, for subtract use negative e.g. -500):");
+        const v = prompt("Enter amount (+ to add, - to subtract):");
         if (v !== null && !isNaN(parseFloat(v)) && db) {
           await db.collection("players").doc(String(uid)).update({ mined: firebase.firestore.FieldValue.increment(parseFloat(v)) });
           showToast("✅ Balance updated!");
@@ -1351,67 +1253,24 @@
       }));
       box.querySelectorAll('.adm-bn').forEach(b => b.addEventListener('click', async () => {
         const uid = b.getAttribute('data-id'), u = usersDB.find(x => String(x.id) === String(uid));
-        if (u && db) {
-          const newBanState = !u.banned;
-          await db.collection("players").doc(String(uid)).update({ banned: newBanState });
-          showToast(newBanState ? "🚫 User banned!" : "✅ User unbanned!");
-        }
+        if (u && db) await db.collection("players").doc(String(uid)).update({ banned: !u.banned });
       }));
     }
-async function processPayout(w, isReject) {
-  if (!db || !w.docId) return;
-  
-  if (isReject) {
-    await db.collection("withdrawals").doc(w.docId).update({ status: "Rejected ❌" });
-    const pRef = db.collection("players").doc(String(w.userId));
-    await pRef.update({ mined: firebase.firestore.FieldValue.increment(w.amt) });
-    SoundFX.error(); showToast("❌ Withdrawal rejected and balance refunded.");
-  } else {
-    // السؤال عن رقم العملية
-    const txHash = prompt("ادخل رقم المعاملة (TX Hash) من محفظتك عشان يشتغل اللينك صح:\n(لو مش عارفه، سيبها فاضية)");
-    
-    let txUrl = "";
-    if (txHash && txHash.trim() !== "") {
-       txUrl = `https://tonviewer.com/transaction/${txHash.trim()}`;
-    } else {
-       txUrl = `https://tonviewer.com/${w.walletAddr}`;
-    }
 
-    await db.collection("withdrawals").doc(w.docId).update({ status: "Paid ✅", txLink: txUrl });
-    
-    if (config.botToken && config.payoutChannel) {
-      // رسالة الإثبات بالإنجليزي
-      const proofText = `✅ <b>Successful Withdrawal Proof #${w.wdNum} | ${config.brandTitle}</b>\n\n` +
-                        `🔢 <b>Operation ID:</b> <code>#${w.wdNum}</code>\n` +
-                        `👤 <b>Player:</b> ${w.userName} (<code>${String(w.userId).slice(0,4)}***</code>)\n` +
-                        `💰 <b>Withdrawn Amount:</b> ${w.amt.toLocaleString()} ${config.coinSym}\n` +
-                        `💎 <b>Net Sent:</b> ${w.net.toLocaleString()} ${config.coinSym}\n` +
-                        `👛 <b>Receiver Wallet:</b> <code>${w.walletAddr.slice(0,6)}...${w.walletAddr.slice(-6)}</code>\n` +
-                        `🏦 <b>Payout Wallet:</b> <code>UQB_qM...Auto Payout Vault</code>\n\n` +
-                        `@${config.botUsername}`;
-      try {
-        await fetch(`https://api.telegram.org/bot${config.botToken}/sendMessage`, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            chat_id: config.payoutChannel,
-            text: proofText,
-            parse_mode: "HTML",
-            reply_markup: {
-              inline_keyboard: [
-                [{ text: `🔗 View Real TX Link`, url: txUrl }],
-                // ضفنا startapp هنا عشان يفتح اللعبة علطول
-                [{ text: "⚔️ Start Mining Now", url: `https://t.me/${config.botUsername}?startapp` }]
-              ]
-            }
-          })
-        });
-      } catch(e) {}
+    async function processPayout(w, isReject) {
+      if (!db || !w.docId) return;
+      if (isReject) {
+        await db.collection("withdrawals").doc(w.docId).update({ status: "Rejected ❌" });
+        await db.collection("players").doc(String(w.userId)).update({ mined: firebase.firestore.FieldValue.increment(w.amt) });
+        SoundFX.error(); showToast("❌ Withdrawal rejected.");
+      } else {
+        const txHash = prompt("Enter TX Hash (Optional):");
+        let txUrl = txHash ? `https://tonviewer.com/transaction/${txHash.trim()}` : `https://tonviewer.com/${w.walletAddr}`;
+        await db.collection("withdrawals").doc(w.docId).update({ status: "Paid ✅", txLink: txUrl });
+        SoundFX.buySuccess(); showToast(`✅ Payout confirmed!`);
+      }
+      renderAdminWithdrawals();
     }
-    SoundFX.buySuccess(); showToast(`✅ Payout confirmed and proof posted!`);
-  }
-  renderAdminWithdrawals();
-}
 
     function renderAdminWithdrawals() {
       const box = document.getElementById('adm-wd-requests-list');
@@ -1420,11 +1279,11 @@ async function processPayout(w, isReject) {
       box.innerHTML = allWithdrawalsDB.map(w => `
         <div class="user-row-card">
           <div style="display:flex;justify-content:space-between;margin-bottom:4px;">
-            <strong>🔢 Withdrawal #${w.wdNum || 1} — ${w.userName}</strong>
+            <strong>🔢 #${w.wdNum} — ${w.userName}</strong>
             <span style="color:${w.status.includes('Paid') ? '#22c55e' : (w.status.includes('Rejected') ? '#ef4444' : 'var(--gb)')};font-weight:800;">${w.status}</span>
           </div>
           <div style="font-size:10px;color:var(--m);word-break:break-all;direction:ltr;margin-bottom:6px;">${w.walletAddr}</div>
-          <div style="font-size:11.5px;margin-bottom:8px;">Amount: ${w.amt} · <strong>Net: <span style="color:#22c55e;">${w.net} ${config.coinSym}</span></strong></div>
+          <div style="font-size:11.5px;margin-bottom:8px;">Amount: ${w.amt} · <strong>Net: ${w.net} ${config.coinSym}</strong></div>
           ${w.status.includes('Pending') ? `
           <div class="grid-3">
             <button class="btn-3d-gold adm-wd-pay" data-id="${w.docId}" style="padding:7px;font-size:10px;">💸 Pay</button>
@@ -1435,10 +1294,7 @@ async function processPayout(w, isReject) {
 
       box.querySelectorAll('.adm-wd-pay').forEach(b => b.addEventListener('click', () => {
         const item = allWithdrawalsDB.find(x => x.docId === b.getAttribute('data-id'));
-        if (item) {
-          const tonLink = `ton://transfer/${item.walletAddr}?jetton=${OFFICIAL_JETTON}&amount=${Math.floor(item.net * 1e9)}`;
-          window.open(tonLink, '_blank');
-        }
+        if (item) window.open(`ton://transfer/${item.walletAddr}?jetton=${OFFICIAL_JETTON}&amount=${Math.floor(item.net * 1e9)}`, '_blank');
       }));
       box.querySelectorAll('.adm-wd-ok').forEach(b => b.addEventListener('click', () => {
         const item = allWithdrawalsDB.find(x => x.docId === b.getAttribute('data-id'));
@@ -1451,41 +1307,40 @@ async function processPayout(w, isReject) {
     }
 
     function openOwnerDashboard() {
-      const pin = prompt("🛡️ Owner PIN:");
-      if (pin === config.adminPin || pin === "202020") {
-        document.getElementById('adm-title').value = config.brandTitle;
-        document.getElementById('adm-sym').value = config.coinSym;
-        document.getElementById('adm-lvl1-day').value = config.lvl1PerDay;
-        document.getElementById('adm-lvl100-day').value = LEVELS_DATA[99].perDay;
-        document.getElementById('adm-ad-rew').value = config.adReward;
-        document.getElementById('adm-ad-max').value = config.maxAdsPerDay;
-        document.getElementById('adm-task-rew').value = config.taskReward;
-        document.getElementById('adm-ref-pct').value = config.refClaimPercent;
-        document.getElementById('adm-ref-minhold').value = config.refMinHold;
-        document.getElementById('adm-minwd').value = config.minWithdraw;
-        document.getElementById('adm-holdpct').value = config.holdPercentReq;
-        document.getElementById('adm-wdfee-pct').value = config.withdrawFeePercent;
-        document.getElementById('adm-payout-wallet').value = config.payoutWallet || "";
-        document.getElementById('adm-adsgram-id').value = config.adsgramBlockId || "";
-        document.getElementById('adm-bottoken').value = config.botToken || "";
-        document.getElementById('adm-payout-ch').value = config.payoutChannel || "@YGRAM1";
-        document.getElementById('adm-admin-chat').value = config.adminChatId || "";
-        document.getElementById('adm-ch1').value = config.channel1;
-        document.getElementById('adm-ch2').value = config.channel2;
-        document.getElementById('adm-minebal').value = Math.floor(minedInApp);
-        document.getElementById('adm-holdbal').value = Math.floor(walletHold);
-        document.getElementById('adm-botuser').value = config.botUsername;
-        document.getElementById('adm-pin').value = config.adminPin;
+      if (CURRENT_UID !== OWNER_UID) return showToast("❌ Access Denied! (Owner Only)", "#ef4444");
+      
+      document.getElementById('adm-title').value = config.brandTitle;
+      document.getElementById('adm-sym').value = config.coinSym;
+      document.getElementById('adm-lvl1-day').value = config.lvl1PerDay || 250;
+      document.getElementById('adm-lvl100-day').value = LEVELS_DATA[99].perDay;
+      document.getElementById('adm-ad-rew').value = config.adReward;
+      document.getElementById('adm-ad-max').value = config.maxAdsPerDay;
+      document.getElementById('adm-task-rew').value = config.taskReward;
+      document.getElementById('adm-ref-pct').value = config.refClaimPercent;
+      document.getElementById('adm-ref-minhold').value = config.refMinHold;
+      document.getElementById('adm-minwd').value = config.minWithdraw;
+      document.getElementById('adm-holdpct').value = config.holdPercentReq;
+      document.getElementById('adm-wdfee-pct').value = config.withdrawFeePercent;
+      document.getElementById('adm-payout-wallet').value = config.payoutWallet || "";
+      document.getElementById('adm-adsgram-id').value = config.adsgramBlockId || "";
+      document.getElementById('adm-bottoken').value = config.botToken || "";
+      document.getElementById('adm-payout-ch').value = config.payoutChannel || "@YGRAM1";
+      document.getElementById('adm-admin-chat').value = config.adminChatId || "";
+      document.getElementById('adm-ch1').value = config.channel1;
+      document.getElementById('adm-ch2').value = config.channel2;
+      document.getElementById('adm-minebal').value = Math.floor(minedInApp);
+      document.getElementById('adm-holdbal').value = Math.floor(walletHold);
+      document.getElementById('adm-botuser').value = config.botUsername;
 
-        if (db) {
-          db.collection("players").onSnapshot(s => { usersDB = []; s.forEach(d => usersDB.push(d.data())); renderAdminUsersList(); });
-          db.collection("withdrawals").onSnapshot(s => {
-            allWithdrawalsDB = []; s.forEach(d => allWithdrawalsDB.push(Object.assign({ docId: d.id }, d.data())));
-            renderAdminWithdrawals();
-          });
-        }
-        switchTab('admin');
+      if (db) {
+        db.collection("players").onSnapshot(s => { usersDB = []; s.forEach(d => usersDB.push(d.data())); renderAdminUsersList(); });
+        db.collection("withdrawals").onSnapshot(s => {
+          allWithdrawalsDB = []; s.forEach(d => allWithdrawalsDB.push(Object.assign({ docId: d.id }, d.data())));
+          renderAdminWithdrawals();
+        });
       }
+      switchTab('admin');
+      document.getElementById('adm-sub-users').style.display = 'block';
     }
 
     function switchTab(id) {
@@ -1500,10 +1355,8 @@ async function processPayout(w, isReject) {
       [1, 2, 3].forEach(n => document.getElementById('tier-btn-' + n).classList.toggle('tier-active', n === activeNum));
     }
 
-    document.getElementById('sound-toggle-btn').addEventListener('click', () => {
-      soundEnabled = !soundEnabled;
-      document.getElementById('sound-toggle-btn').style.opacity = soundEnabled ? "1" : "0.45";
-    });
+    // Event Listeners
+    document.getElementById('sound-toggle-btn').addEventListener('click', () => { soundEnabled = !soundEnabled; document.getElementById('sound-toggle-btn').style.opacity = soundEnabled ? "1" : "0.45"; });
     document.getElementById('lang-menu-btn').addEventListener('click', e => { e.stopPropagation(); document.getElementById('lang-dropdown').classList.toggle('show'); });
     document.querySelectorAll('.lang-opt').forEach(o => o.addEventListener('click', e => { e.stopPropagation(); currentLang = o.getAttribute('data-lang'); localStorage.setItem('vk_lang', currentLang); document.getElementById('lang-dropdown').classList.remove('show'); applyUI(); }));
     document.addEventListener('click', () => document.getElementById('lang-dropdown').classList.remove('show'));
@@ -1520,11 +1373,7 @@ async function processPayout(w, isReject) {
 
     document.getElementById('btn-turbo').addEventListener('click', e => {
       if (!isHumanClick(e)) return;
-      showRealTelegramAd(() => {
-        turboUntil = Date.now() + 300000;
-        localStorage.setItem('vksec_turbo', turboUntil);
-        SoundFX.buySuccess(); applyUI(); showToast("⚡ Turbo x2 Activated!");
-      });
+      showRealTelegramAd(() => { showToast("⚡ Turbo Activated!"); });
     });
 
     document.querySelectorAll('.btn-stonfi-buy').forEach(b => b.addEventListener('click', openStonfiSwap));
@@ -1535,28 +1384,25 @@ async function processPayout(w, isReject) {
     document.getElementById('btn-request-wd').addEventListener('click', requestWithdrawal);
 
     document.getElementById('btn-watch-ad').addEventListener('click', e => {
-      if (!isHumanClick(e)) return;
+      if (!isHumanClick(e) || !db) return;
       if (adsWatched >= config.maxAdsPerDay) return showToast("⚠️ Daily ad limit reached!", "#ef4444");
-      showRealTelegramAd(() => {
+      showRealTelegramAd(async () => {
         adsWatched++;
-        minedInApp += Number(config.adReward) || 5;
-        localStorage.setItem('vksec_ads', adsWatched);
-        savePlayerToCloud(); SoundFX.collect(); applyUI();
-        showToast(`📺 +${config.adReward} ${config.coinSym}!`);
+        await db.collection("players").doc(CURRENT_UID).update({ mined: firebase.firestore.FieldValue.increment(Number(config.adReward) || 5) });
+        SoundFX.collect(); showToast(`📺 +${config.adReward} ${config.coinSym}!`);
       });
     });
 
     let chV = {1:false, 2:false};
     document.getElementById('btn-open-ch1').addEventListener('click', () => { chV[1] = true; window.open(config.channel1, '_blank'); });
     document.getElementById('btn-open-ch2').addEventListener('click', () => { chV[2] = true; window.open(config.channel2, '_blank'); });
-    [1, 2].forEach(n => document.getElementById(`ch-task-${n}-btn`).addEventListener('click', e => {
-      if (!isHumanClick(e)) return;
+    [1, 2].forEach(n => document.getElementById(`ch-task-${n}-btn`).addEventListener('click', async e => {
+      if (!isHumanClick(e) || !db) return;
       if (localStorage.getItem('vksec_task'+n)) return showToast("Already claimed!", "#f59e0b");
-      if (!chV[n]) return showToast("❌ Open channel & subscribe first!", "#ef4444");
-      minedInApp += Number(config.taskReward) || 50;
+      if (!chV[n]) return showToast("❌ Open channel first!", "#ef4444");
       localStorage.setItem('vksec_task'+n, '1');
-      savePlayerToCloud(); SoundFX.buySuccess(); applyUI();
-      showToast(`🎉 +${config.taskReward} ${config.coinSym}!`);
+      await db.collection("players").doc(CURRENT_UID).update({ mined: firebase.firestore.FieldValue.increment(Number(config.taskReward) || 50) });
+      SoundFX.buySuccess(); showToast(`🎉 +${config.taskReward} ${config.coinSym}!`);
     }));
 
     document.getElementById('tier-btn-1').addEventListener('click', () => { currentLevelPage = 1; setActiveTierBtn(1); renderLevelsGrid(); });
@@ -1577,37 +1423,40 @@ async function processPayout(w, isReject) {
     document.querySelectorAll('.adm-filter-btn').forEach(b => b.addEventListener('click', () => { currentUserFilter = b.getAttribute('data-filter'); renderAdminUsersList(); }));
 
     document.getElementById('btn-save-admin').addEventListener('click', async () => {
-      config.brandTitle = document.getElementById('adm-title').value.trim() || "$VIKING MINER";
-      config.coinSym = document.getElementById('adm-sym').value.trim() || "$VIKING";
-      config.lvl1PerDay = parseFloat(document.getElementById('adm-lvl1-day').value) || 250;
-      config.adReward = parseFloat(document.getElementById('adm-ad-rew').value) || 5;
-      config.maxAdsPerDay = parseInt(document.getElementById('adm-ad-max').value) || 10;
-      config.taskReward = parseFloat(document.getElementById('adm-task-rew').value) || 50;
-      config.refClaimPercent = parseFloat(document.getElementById('adm-ref-pct').value) || 5;
-      config.refMinHold = parseFloat(document.getElementById('adm-ref-minhold').value) || 200;
-      config.minWithdraw = parseInt(document.getElementById('adm-minwd').value) || 5000;
-      config.holdPercentReq = parseInt(document.getElementById('adm-holdpct').value) || 25;
-      config.withdrawFeePercent = parseFloat(document.getElementById('adm-wdfee-pct').value) || 5;
-      config.payoutWallet = document.getElementById('adm-payout-wallet').value.trim();
-      config.adsgramBlockId = document.getElementById('adm-adsgram-id').value.trim();
-      config.botToken = document.getElementById('adm-bottoken').value.trim();
-      config.payoutChannel = document.getElementById('adm-payout-ch').value.trim() || "@YGRAM1";
-      config.adminChatId = document.getElementById('adm-admin-chat').value.trim();
-      config.channel1 = document.getElementById('adm-ch1').value.trim() || "https://t.me/YGRAM1";
-      config.channel2 = document.getElementById('adm-ch2').value.trim() || "https://t.me/telegram";
-      config.botUsername = document.getElementById('adm-botuser').value.trim() || "VIKINGMINER_BOT";
-      config.adminPin = document.getElementById('adm-pin').value.trim() || "202020";
+      if (CURRENT_UID !== OWNER_UID) return showToast("Access Denied!", "#ef4444");
+      
+      const newConfig = {
+        brandTitle: document.getElementById('adm-title').value.trim(),
+        coinSym: document.getElementById('adm-sym').value.trim(),
+        lvl1PerDay: parseFloat(document.getElementById('adm-lvl1-day').value) || 250,
+        adReward: parseFloat(document.getElementById('adm-ad-rew').value) || 5,
+        maxAdsPerDay: parseInt(document.getElementById('adm-ad-max').value) || 10,
+        taskReward: parseFloat(document.getElementById('adm-task-rew').value) || 50,
+        refClaimPercent: parseFloat(document.getElementById('adm-ref-pct').value) || 5,
+        refMinHold: parseFloat(document.getElementById('adm-ref-minhold').value) || 200,
+        minWithdraw: parseInt(document.getElementById('adm-minwd').value) || 5000,
+        holdPercentReq: parseInt(document.getElementById('adm-holdpct').value) || 25,
+        withdrawFeePercent: parseFloat(document.getElementById('adm-wdfee-pct').value) || 5,
+        payoutWallet: document.getElementById('adm-payout-wallet').value.trim(),
+        adsgramBlockId: document.getElementById('adm-adsgram-id').value.trim(),
+        botToken: document.getElementById('adm-bottoken').value.trim(),
+        payoutChannel: document.getElementById('adm-payout-ch').value.trim(),
+        adminChatId: document.getElementById('adm-admin-chat').value.trim(),
+        channel1: document.getElementById('adm-ch1').value.trim(),
+        channel2: document.getElementById('adm-ch2').value.trim(),
+        botUsername: document.getElementById('adm-botuser').value.trim(),
+      };
 
+      if (db) await db.collection("settings").doc("global").set(newConfig, { merge: true });
+      
       const mb = parseFloat(document.getElementById('adm-minebal').value), hb = parseFloat(document.getElementById('adm-holdbal').value);
-      if (!isNaN(mb)) minedInApp = mb; if (!isNaN(hb)) walletHold = hb;
+      if (!isNaN(mb)) await db.collection("players").doc(CURRENT_UID).update({ mined: mb });
+      if (!isNaN(hb)) await db.collection("players").doc(CURRENT_UID).update({ hold: hb });
 
-      rebuildLevelsTable();
-      await savePlayerToCloud();
-      if (db) await db.collection("settings").doc("global").set(config, { merge: true });
-      SoundFX.buySuccess(); applyUI(); showToast("☁️ Settings saved and applied!");
+      SoundFX.buySuccess(); showToast("☁️ Settings saved and applied!");
     });
 
-    applyUI(); initCloudSync(); setInterval(updateLiveMining, 200); updateLiveMining();
+    applyUI(); initCloudSync(); setInterval(updateLiveMining, 1000); updateLiveMining();
   })();
   </script>
 </body>
