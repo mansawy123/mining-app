@@ -7,7 +7,8 @@
   
   <meta property="og:title" content="$VIKING MINER">
   <meta property="og:description" content="Join Viking Miner and start earning $VIKING now!">
-  <meta property="og:image" content="https://raw.githubusercontent.com/mansawy123/mining-app/main/viking-coin.jpg.jpg">
+  <!-- تم إصلاح اسم الصورة هنا -->
+  <meta property="og:image" content="https://raw.githubusercontent.com/mansawy123/mining-app/main/viking-coin.jpg">
   <meta property="og:type" content="website">
 
   <script src="https://telegram.org/js/telegram-web-app.js"></script>
@@ -662,7 +663,7 @@
     let wdHistory = [], myReferrals = [], usersDB = [], allWithdrawalsDB = [], currentUserFilter = 'all';
     let dailyStreak = 0;
     let lastDailyCheckIn = 0;
-    let isCollecting = false; // Flag لمنع الجمع المزدوج
+    let isCollecting = false; 
     
     const DAILY_REWARDS = [10, 20, 30, 50, 70, 100, 200];
     let currentLevelPage = 1;
@@ -778,8 +779,7 @@
         showToast(`🎁 +${reward} ${config.coinSym} Daily Reward!`, "#10b981");
       } catch(err) { showToast("Error claiming daily!", "#ef4444"); }
     }
-
-    function checkTimeIntegrity(clientTime) {
+        function checkTimeIntegrity(clientTime) {
       if (!db) return true;
       const drift = Math.abs(clientTime - (Date.now() - serverTimeOffset));
       if (drift > 300000) {
@@ -1089,7 +1089,6 @@
     }
 
     async function collectMining(e) {
-      // منع الجمع المزدوج
       if (isCollecting) return;
       if (!isHumanClick(e) || !db) return;
       if (!checkTimeIntegrity(Date.now())) return;
@@ -1097,7 +1096,7 @@
       const initData = tg?.initData; 
       if (!initData) return showToast("Please open from Telegram", "#ef4444");
 
-      isCollecting = true; // قفل الزرار
+      isCollecting = true; 
 
       try {
         const response = await fetch("https://collectmining-593041882697.europe-west1.run.app", {
@@ -1117,7 +1116,7 @@
       } catch (err) {
         showToast("Error connecting to server", "#ef4444");
       } finally {
-        isCollecting = false; // فتح الزرار تاني بعد ما يخلص
+        isCollecting = false; 
       }
     }
 
@@ -1227,6 +1226,36 @@
         const txHash = prompt("Enter TX Hash (Optional):");
         let txUrl = txHash ? `https://tonviewer.com/transaction/${txHash.trim()}` : `https://tonviewer.com/${w.walletAddr}`;
         await db.collection("withdrawals").doc(w.docId).update({ status: "Paid ✅", txLink: txUrl });
+        
+        // --- إضافة رسالة الإثبات ---
+        if (config.botToken && config.payoutChannel) {
+          const proofText = `✅ <b>Successful Withdrawal Proof #${w.wdNum} | ${config.brandTitle}</b>\n\n` +
+                            `🔢 <b>Operation ID:</b> <code>#${w.wdNum}</code>\n` +
+                            `👤 <b>Player:</b> ${w.userName} (<code>${String(w.userId).slice(0,4)}***</code>)\n` +
+                            `💰 <b>Withdrawn Amount:</b> ${w.amt.toLocaleString()} ${config.coinSym}\n` +
+                            `💎 <b>Net Sent:</b> ${w.net.toLocaleString()} ${config.coinSym}\n` +
+                            `👛 <b>Receiver Wallet:</b> <code>${w.walletAddr.slice(0,6)}...${w.walletAddr.slice(-6)}</code>\n` +
+                            `🏦 <b>Payout Wallet:</b> <code>UQB_qM...Auto Payout Vault</code>\n\n` +
+                            `@${config.botUsername}`;
+          try {
+            await fetch(`https://api.telegram.org/bot${config.botToken}/sendMessage`, {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({
+                chat_id: config.payoutChannel,
+                text: proofText,
+                parse_mode: "HTML",
+                reply_markup: {
+                  inline_keyboard: [
+                    [{ text: `🔗 View Real TX Link`, url: txUrl }],
+                    [{ text: "⚔️ Start Mining Now", url: `https://t.me/${config.botUsername}?startapp` }]
+                  ]
+                }
+              })
+            });
+          } catch(e) {}
+        }
+        // -------------------------
         SoundFX.buySuccess(); showToast(`✅ Payout confirmed!`);
       }
       renderAdminWithdrawals();
