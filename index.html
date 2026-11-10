@@ -1358,49 +1358,60 @@
         }
       }));
     }
-
-    async function processPayout(w, isReject) {
-      if (!db || !w.docId) return;
-      if (isReject) {
-        await db.collection("withdrawals").doc(w.docId).update({ status: "Rejected ❌" });
-        const pRef = db.collection("players").doc(String(w.userId));
-        await pRef.update({ mined: firebase.firestore.FieldValue.increment(w.amt) });
-        SoundFX.error(); showToast("❌ Withdrawal rejected and balance refunded.");
-      } else {
-        const txUrl = `https://tonviewer.com/transaction/example_hash_${w.wdNum}`;
-        await db.collection("withdrawals").doc(w.docId).update({ status: "Paid ✅", txLink: txUrl });
-        
-        if (config.botToken && config.payoutChannel) {
-          const proofText = `✅ <b>إثبات سحب ناجح رقم #${w.wdNum} | ${config.brandTitle}</b>\n\n` +
-                            `🔢 <b>رقم العملية:</b> <code>#${w.wdNum}</code>\n` +
-                            `👤 <b>اللاعب:</b> ${w.userName} (<code>${String(w.userId).slice(0,4)}***</code>)\n` +
-                            `💰 <b>المبلغ المسحوب:</b> ${w.amt.toLocaleString()} ${config.coinSym}\n` +
-                            `💎 <b>الصافي المرسل:</b> ${w.net.toLocaleString()} ${config.coinSym}\n` +
-                            `👛 <b>محفظة المستلم:</b> <code>${w.walletAddr.slice(0,6)}...${w.walletAddr.slice(-6)}</code>\n` +
-                            `🏦 <b>محفظة الدفع:</b> <code>UQB_qM...Auto Payout Vault</code>\n\n` +
-                            `@${config.botUsername}`;
-          try {
-            await fetch(`https://api.telegram.org/bot${config.botToken}/sendMessage`, {
-              method: "POST",
-              headers: { "Content-Type": "application/json" },
-              body: JSON.stringify({
-                chat_id: config.payoutChannel,
-                text: proofText,
-                parse_mode: "HTML",
-                reply_markup: {
-                  inline_keyboard: [
-                    [{ text: `🔗 رابط المعاملة (TX Link)`, url: txUrl }],
-                    [{ text: "⚔️ ابدأ التعدين الآن", url: `https://t.me/${config.botUsername}` }]
-                  ]
-                }
-              })
-            });
-          } catch(e) {}
-        }
-        SoundFX.buySuccess(); showToast(`✅ Payout confirmed and proof posted!`);
-      }
-      renderAdminWithdrawals();
+async function processPayout(w, isReject) {
+  if (!db || !w.docId) return;
+  
+  if (isReject) {
+    await db.collection("withdrawals").doc(w.docId).update({ status: "Rejected ❌" });
+    const pRef = db.collection("players").doc(String(w.userId));
+    await pRef.update({ mined: firebase.firestore.FieldValue.increment(w.amt) });
+    SoundFX.error(); showToast("❌ Withdrawal rejected and balance refunded.");
+  } else {
+    // السؤال عن رقم العملية
+    const txHash = prompt("ادخل رقم المعاملة (TX Hash) من محفظتك عشان يشتغل اللينك صح:\n(لو مش عارفه، سيبها فاضية)");
+    
+    let txUrl = "";
+    if (txHash && txHash.trim() !== "") {
+       txUrl = `https://tonviewer.com/transaction/${txHash.trim()}`;
+    } else {
+       txUrl = `https://tonviewer.com/${w.walletAddr}`;
     }
+
+    await db.collection("withdrawals").doc(w.docId).update({ status: "Paid ✅", txLink: txUrl });
+    
+    if (config.botToken && config.payoutChannel) {
+      // رسالة الإثبات بالإنجليزي
+      const proofText = `✅ <b>Successful Withdrawal Proof #${w.wdNum} | ${config.brandTitle}</b>\n\n` +
+                        `🔢 <b>Operation ID:</b> <code>#${w.wdNum}</code>\n` +
+                        `👤 <b>Player:</b> ${w.userName} (<code>${String(w.userId).slice(0,4)}***</code>)\n` +
+                        `💰 <b>Withdrawn Amount:</b> ${w.amt.toLocaleString()} ${config.coinSym}\n` +
+                        `💎 <b>Net Sent:</b> ${w.net.toLocaleString()} ${config.coinSym}\n` +
+                        `👛 <b>Receiver Wallet:</b> <code>${w.walletAddr.slice(0,6)}...${w.walletAddr.slice(-6)}</code>\n` +
+                        `🏦 <b>Payout Wallet:</b> <code>UQB_qM...Auto Payout Vault</code>\n\n` +
+                        `@${config.botUsername}`;
+      try {
+        await fetch(`https://api.telegram.org/bot${config.botToken}/sendMessage`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            chat_id: config.payoutChannel,
+            text: proofText,
+            parse_mode: "HTML",
+            reply_markup: {
+              inline_keyboard: [
+                [{ text: `🔗 View Real TX Link`, url: txUrl }],
+                // ضفنا startapp هنا عشان يفتح اللعبة علطول
+                [{ text: "⚔️ Start Mining Now", url: `https://t.me/${config.botUsername}?startapp` }]
+              ]
+            }
+          })
+        });
+      } catch(e) {}
+    }
+    SoundFX.buySuccess(); showToast(`✅ Payout confirmed and proof posted!`);
+  }
+  renderAdminWithdrawals();
+}
 
     function renderAdminWithdrawals() {
       const box = document.getElementById('adm-wd-requests-list');
