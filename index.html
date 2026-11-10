@@ -15,6 +15,7 @@
   <script src="https://sad.adsgram.ai/js/sad.min.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-auth-compat.js"></script>
   <style>
     :root{--g:#f59e0b;--gb:#fde047;--m:#94a3b8}
     *{box-sizing:border-box;margin:0;padding:0;font-family:system-ui,-apple-system,sans-serif;user-select:none;-webkit-tap-highlight-color:transparent}
@@ -457,14 +458,13 @@
       <span data-i18n="nav_profile">Profile</span>
     </div>
   </div>
-    <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-auth-compat.js"></script>
+
   <script>
   (function() {
     "use strict";
     const tg = window.Telegram?.WebApp;
     if (tg) { tg.expand(); tg.ready(); }
 
-    // ⚠️ ضع الآي دي الخاص بك هنا (صاحب التطبيق) ⚠️
     const OWNER_UID = "7216746593"; 
     
     let resolvedUser = tg?.initDataUnsafe?.user;
@@ -499,10 +499,7 @@
     try {
       if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
       db = firebase.firestore();
-      
-      // تفعيل Anonymous Auth لحماية قاعدة البيانات
       firebase.auth().signInAnonymously().catch(e => console.error("Auth Error:", e));
-      
     } catch (e) {}
 
     let deviceFingerprint = localStorage.getItem('vk_device_fp');
@@ -652,11 +649,10 @@
     };
     let config = Object.assign({}, defaultConfig, JSON.parse(localStorage.getItem('vksec_config') || "{}"));
 
-    // State Variables (Strictly synced from Firestore)
     let minedInApp = 0;
     let walletHold = 0;
     let lastCollectTime = Date.now();
-    let serverTimeOffset = 0; // To check for time manipulation
+    let serverTimeOffset = 0;
     let lastWithdrawTime = 0;
     let pendingRefComm = 0;
     let adsWatched = 0;
@@ -782,11 +778,10 @@
       } catch(err) { showToast("Error claiming daily!", "#ef4444"); }
     }
 
-    // Security: Check time manipulation
     function checkTimeIntegrity(clientTime) {
       if (!db) return true;
       const drift = Math.abs(clientTime - (Date.now() - serverTimeOffset));
-      if (drift > 300000) { // 5 minutes max drift
+      if (drift > 300000) {
         showToast("⚠️ System time mismatch! Please set time to Auto.", "#ef4444");
         return false;
       }
@@ -796,7 +791,6 @@
     async function initCloudSync() {
       if (!db) { finishBoot(); return; }
 
-      // تحديث الإعدادات (للكل يقرأ)
       db.collection("settings").doc("global").onSnapshot(doc => {
         if (doc.exists) {
           config = Object.assign({}, defaultConfig, doc.data());
@@ -806,7 +800,6 @@
         }
       });
 
-      // التحقق من تلاعب الوقت (بمقارنة توقيت السيرفر)
       db.collection("settings").doc("time").get().then(doc => {
           if(doc.exists) serverTimeOffset = Date.now() - doc.data().now;
       }).catch(e=>{});
@@ -841,7 +834,6 @@
         }
       } catch (e) {}
 
-      // تحديث حالة المستخدم بالكامل من السيرفر (المرجع الوحيد)
       pRef.onSnapshot(doc => {
         finishBoot();
         if (!doc.exists) { document.getElementById('main-app-shell').style.display = 'flex'; return; }
@@ -858,7 +850,6 @@
           document.getElementById('main-app-shell').style.display = 'flex';
         }
 
-        // تحديث المتغيرات المحلية من السيرفر
         minedInApp = d.mined || 0;
         walletHold = d.hold || 0;
         lastCollectTime = d.lastCollectTime || Date.now();
@@ -872,17 +863,9 @@
         refBonusPaid = !!d.refBonusPaid;
         myReferrals = d.referrals || [];
         
-        // تحديث الـ UI
         applyUI();
-        
-        // إخفاء زر الأدمن لو مش المالك
-        if (CURRENT_UID !== OWNER_UID) {
-            document.getElementById('lang-menu-btn').style.display = 'flex';
-        }
-
       });
 
-      // مراقبة السحوبات
       db.collection("withdrawals").where("userId", "==", CURRENT_UID).onSnapshot(snap => {
         wdHistory = []; snap.forEach(d => wdHistory.push(d.data()));
         wdHistory.sort((a, b) => (b.wdNum || 0) - (a.wdNum || 0));
@@ -905,14 +888,12 @@
       }
 
       try {
-        // نستخدم update مش set عشان نمنع تعديل الحقول الحساسة
         await db.collection("players").doc(CURRENT_UID).update({
           name: tgUser.first_name || "Warrior", username: tgUser.username || "user",
           deviceHash: deviceFingerprint, walletAddr: linkedWalletAddr, lastWithdrawTime: lastWithdrawTime,
           updatedAt: Date.now()
         });
 
-        // فحص إذا كان المستخدم حقق شرط تفعيل الإحالة
         const reqHold = LEVELS_DATA[1].reqHold;
         if (invitedById && !refBonusPaid && linkedWalletAddr && walletHold >= reqHold) {
           refBonusPaid = true;
@@ -1008,7 +989,6 @@
       applyTranslations();
       const { cur, next } = getCurrentLevelObj();
       
-      // إخفاء زر الأدمن للغير مصرح لهم
       document.getElementById('adm-sub-users').style.display = 'none';
       document.getElementById('adm-sub-wd').style.display = 'none';
       document.getElementById('adm-sub-set').style.display = 'none';
@@ -1081,9 +1061,7 @@
       const dict = I18N[currentLang] || I18N.en;
       const perSec = (cur.perDay) / 86400;
       
-      // كشف التلاعب بالوقت
       if (Date.now() < lastCollectTime - 60000) { 
-          // لو الجهاز اتأخر لورا فجأة
           lastCollectTime = Date.now(); 
       }
 
@@ -1111,54 +1089,29 @@
 
     async function collectMining(e) {
       if (!isHumanClick(e) || !db) return;
-      
-      // التحقق من التلاعب بالوقت قبل الجمع
       if (!checkTimeIntegrity(Date.now())) return;
 
-      const { cur } = getCurrentLevelObj();
-      const rawElapsed = Math.max(0, (Date.now() - lastCollectTime) / 1000);
-      
-      if (rawElapsed < 10) { SoundFX.error(); return showToast("⏳ Wait at least 10s!", "#f59e0b"); }
-      // منع جمع مبالغ ضخمة لو المستخدم قدم الساعة
-      if (rawElapsed > 90000) { 
-          showToast("⚠️ Time anomaly detected. Cannot collect.", "#ef4444"); 
-          return; 
-      }
-
-      const cappedElapsed = Math.min(86400, rawElapsed);
-      const pending = cappedElapsed * (cur.perDay / 86400);
+      const initData = tg?.initData; 
+      if (!initData) return showToast("Please open from Telegram", "#ef4444");
 
       try {
-        // تحديث آمن باستخدام increment
-        await db.collection("players").doc(CURRENT_UID).update({
-          mined: firebase.firestore.FieldValue.increment(pending),
-          lastCollectTime: Date.now() 
+        const response = await fetch("https://collectmining-593041882697.europe-west1.run.app", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ initData })
         });
-        SoundFX.collect();
-        showToast(`⚔️ +${pending.toFixed(4)} ${config.coinSym}!`);
 
-        // توزيع أرباح الإحالة
-        const minReqHold = LEVELS_DATA[1].reqHold; 
-        if (invitedById && linkedWalletAddr && walletHold >= minReqHold) {
-          const comm = +(pending * ((Number(config.refClaimPercent) || 5) / 100)).toFixed(4);
-          if (comm > 0) {
-            const invRef = db.collection("players").doc(String(invitedById));
-            const invSnap = await invRef.get();
-            if (invSnap.exists && invSnap.data().deviceHash !== deviceFingerprint) {
-              const idata = invSnap.data();
-              const updRefs = (idata.referrals || []).map(r => {
-                  if (String(r.id) === CURRENT_UID) return { ...r, profit: (r.profit || 0) + comm };
-                  return r;
-              });
-              await invRef.update({
-                pendingRefComm: firebase.firestore.FieldValue.increment(comm),
-                refCommissionEarned: firebase.firestore.FieldValue.increment(comm),
-                referrals: updRefs
-              });
-            }
-          }
+        const result = await response.json();
+        
+        if (result.success) {
+          SoundFX.collect();
+          showToast(`⚔️ +${result.added.toFixed(4)} ${config.coinSym}!`);
+        } else {
+          showToast("❌ " + result.error, "#ef4444");
         }
-      } catch (err) { showToast("Error collecting!", "#ef4444"); }
+      } catch (err) {
+        showToast("Error connecting to server", "#ef4444");
+      }
     }
 
     function renderLevelsGrid() {
