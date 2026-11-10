@@ -7,7 +7,7 @@
   
   <meta property="og:title" content="$VIKING MINER">
   <meta property="og:description" content="Join Viking Miner and start earning $VIKING now!">
-  <meta property="og:image" content="https://raw.githubusercontent.com/mansawy123/mining-app/main/viking-boot.jpg">
+  <meta property="og:image" content="https://raw.githubusercontent.com/mansawy123/mining-app/main/viking-coin.jpg.jpg">
   <meta property="og:type" content="website">
 
   <script src="https://telegram.org/js/telegram-web-app.js"></script>
@@ -662,6 +662,7 @@
     let wdHistory = [], myReferrals = [], usersDB = [], allWithdrawalsDB = [], currentUserFilter = 'all';
     let dailyStreak = 0;
     let lastDailyCheckIn = 0;
+    let isCollecting = false; // Flag لمنع الجمع المزدوج
     
     const DAILY_REWARDS = [10, 20, 30, 50, 70, 100, 200];
     let currentLevelPage = 1;
@@ -921,7 +922,7 @@
 
     let tonConnectUI = null, userClickedConnect = false;
     try {
-      tonConnectUI = new TON_CONNECT_UI.TonConnectUI({ manifestUrl: 'https://ton-connect.github.io/demo-dapp-with-react-ui/tonconnect-manifest.json', buttonRootId: 'ton-connect-container' });
+      tonConnectUI = new TON_CONNECT_UI.TonConnectUI({ manifestUrl: 'https://mansawy123.github.io/mining-app/tonconnect-manifest.json', buttonRootId: 'ton-connect-container' });
       tonConnectUI.onStatusChange(async wallet => {
         const newAddr = wallet?.account?.address || "";
         if (newAddr) {
@@ -1088,11 +1089,15 @@
     }
 
     async function collectMining(e) {
+      // منع الجمع المزدوج
+      if (isCollecting) return;
       if (!isHumanClick(e) || !db) return;
       if (!checkTimeIntegrity(Date.now())) return;
 
       const initData = tg?.initData; 
       if (!initData) return showToast("Please open from Telegram", "#ef4444");
+
+      isCollecting = true; // قفل الزرار
 
       try {
         const response = await fetch("https://collectmining-593041882697.europe-west1.run.app", {
@@ -1111,6 +1116,8 @@
         }
       } catch (err) {
         showToast("Error connecting to server", "#ef4444");
+      } finally {
+        isCollecting = false; // فتح الزرار تاني بعد ما يخلص
       }
     }
 
@@ -1410,6 +1417,7 @@
     });
 
     applyUI(); initCloudSync(); setInterval(updateLiveMining, 1000); updateLiveMining();
+    setTimeout(() => { finishBoot(); }, 3000);
   })();
   </script>
 </body>
