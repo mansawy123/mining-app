@@ -504,7 +504,6 @@
     try {
       if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
       db = firebase.firestore();
-      firebase.auth().signInAnonymously().catch(e => console.error("Auth Error:", e));
     } catch (e) {}
 
     let deviceFingerprint = localStorage.getItem('vk_device_fp');
@@ -655,23 +654,24 @@
     };
     let config = Object.assign({}, defaultConfig, JSON.parse(localStorage.getItem('vksec_config') || "{}"));
 
-    let minedInApp = 0;
-    let walletHold = 0;
-    let lastCollectTime = Date.now();
+    let minedInApp = parseFloat(localStorage.getItem('vksec_mined')) || 0;
+    let walletHold = parseFloat(localStorage.getItem('vksec_hold')) || 0;
+    let lastCollectTime = parseInt(localStorage.getItem('vksec_last_collect')) || Date.now();
     let serverTimeOffset = 0;
     let lastWithdrawTime = 0;
     let pendingRefComm = 0;
     let adsWatched = 0;
     let lastAdUtcDay = 0;
     let task1Done = false, task2Done = false;
-    let linkedWalletAddr = "";
+    let linkedWalletAddr = localStorage.getItem('vksec_wallet_addr') || "";
     let refCommissionEarned = 0;
     let invitedById = null, refBonusPaid = false;
     let wdHistory = [], myReferrals = [], usersDB = [], allWithdrawalsDB = [], currentUserFilter = 'all';
     let dailyStreak = 0;
     let lastDailyCheckIn = 0;
     let turboUntil = parseInt(localStorage.getItem('vksec_turbo')) || 0;
-    let isCollecting = false; 
+    let isCollecting = false;
+    let initialLoadDone = false;
     
     const DAILY_REWARDS = [10, 20, 30, 50, 70, 100, 200];
     let currentLevelPage = 1;
@@ -685,6 +685,8 @@
     }, 150);
 
     function finishBoot() {
+      if (initialLoadDone) return;
+      initialLoadDone = true;
       clearInterval(bootTimer);
       const el = document.getElementById('boot-progress');
       if (el) el.style.width = '100%';
@@ -693,7 +695,7 @@
         if (loader) loader.style.display = 'none';
         const app = document.getElementById('main-app-shell');
         if (app && document.getElementById('banned-screen').style.display !== 'flex') app.style.display = 'flex';
-      }, 400);
+      }, 300);
     }
 
     const customLevels = [
@@ -778,19 +780,22 @@
       
       if (todayUtc === lastUtc) return showToast("Already claimed today!", "#ef4444");
 
-      dailyStreak = (lastUtc === todayUtc - 1) ? (dailyStreak % 7) + 1 : 1;
-      const reward = DAILY_REWARDS[dailyStreak - 1];
+      const nextStreak = (lastUtc === todayUtc - 1) ? (dailyStreak % 7) + 1 : 1;
+      const reward = DAILY_REWARDS[nextStreak - 1];
       
       try {
-        await db.collection("players").doc(CURRENT_UID).update({
-          dailyStreak: dailyStreak,
+        await db.collection("players").doc(CURRENT_UID).set({
+          dailyStreak: nextStreak,
           lastDailyCheckIn: Date.now(),
           mined: firebase.firestore.FieldValue.increment(reward)
-        });
+        }, { merge: true });
+        dailyStreak = nextStreak;
+        lastDailyCheckIn = Date.now();
         SoundFX.buySuccess();
+        applyUI();
         showToast(`🎁 +${reward} ${config.coinSym} Daily Reward!`, "#10b981");
       } catch(err) { 
-        showToast("Error: " + err.message, "#ef4444"); 
+        showToast("⚠️ فشل الحفظ: قم بتحديث Rules في Firebase Console!", "#ef4444"); 
       }
     }
 
@@ -810,29 +815,33 @@
       if (linkedWalletAddr && walletHold >= reqHold) {
         refBonusPaid = true;
         try {
-          await db.collection("players").doc(CURRENT_UID).update({ refBonusPaid: true });
+          await db.collection("players").doc(CURRENT_UID).set({ refBonusPaid: true }, { merge: true });
           const invRef = db.collection("players").doc(String(invitedById));
           const invSnap = await invRef.get();
           if (invSnap.exists && invSnap.data().deviceHash !== deviceFingerprint) {
             const idata = invSnap.data();
             const updRefs = (idata.referrals || []).map(r => String(r.id) === CURRENT_UID ? Object.assign({}, r, { status: "Verified ✅" }) : r);
-            await invRef.update({ referrals: updRefs });
+            await invRef.set({ referrals: updRefs }, { merge: true });
           }
         } catch (e) {}
       }
     }
 
     async function initCloudSync() {
-      if (!db) { finishBoot(); return; }
+      if (!db) { applyUI(); finishBoot(); return; }
+
+      try {
+        await firebase.auth().signInAnonymously();
+      } catch (e) {}
 
       db.collection("settings").doc("global").onSnapshot(doc => {
         if (doc.exists) {
           config = Object.assign({}, defaultConfig, doc.data());
           localStorage.setItem('vksec_config', JSON.stringify(config));
           rebuildLevelsTable();
-          applyUI();
+          if (initialLoadDone) applyUI();
         }
-      });
+      }, err => {});
 
       db.collection("settings").doc("time").get().then(doc => {
         if (doc.exists) serverTimeOffset = Date.now() - doc.data().now;
@@ -849,7 +858,7 @@
           await pRef.set({
             id: CURRENT_UID, name: tgUser.first_name || "Warrior", username: tgUser.username || "user",
             deviceHash: deviceFingerprint, mined: 0, hold: 0, lastCollectTime: Date.now(),
-            walletAddr: "", banned: false, invitedBy: validInv, refBonusPaid: false,
+            walletAddr: linkedWalletAddr || "", banned: false, invitedBy: validInv, refBonusPaid: false,
             refCommissionEarned: 0, pendingRefComm: 0, lastWithdrawTime: 0,
             adsWatched: 0, lastAdUtcDay: getUtcDay(Date.now()), task1Done: false, task2Done: false,
             dailyStreak: 0, lastDailyCheckIn: 0, lastSeen: Date.now(), referrals: [], createdAt: Date.now()
@@ -862,7 +871,7 @@
               const idata = invSnap.data(), rArr = idata.referrals || [];
               if (!rArr.some(r => String(r.id) === CURRENT_UID)) {
                 rArr.push({ id: CURRENT_UID, name: tgUser.first_name || "Warrior", deviceHash: deviceFingerprint, status: idata.deviceHash === deviceFingerprint ? "⚠️ Duplicate" : "Pending ⏳", profit: 0 });
-                await invRef.update({ referrals: rArr });
+                await invRef.set({ referrals: rArr }, { merge: true });
               }
             }
           }
@@ -877,30 +886,53 @@
       } catch (e) {}
 
       pRef.onSnapshot(doc => {
-        finishBoot();
-        if (!doc.exists) { document.getElementById('main-app-shell').style.display = 'flex'; return; }
+        // تجاهل التحديثات المؤقتة غير المؤكدة لمنع قفز الرصيد عدة مرات
+        if (doc.metadata && doc.metadata.hasPendingWrites && initialLoadDone) return;
+
+        if (!doc.exists) {
+          applyUI();
+          finishBoot();
+          return;
+        }
         const d = doc.data();
         
         if (d.banned === true) {
           localStorage.setItem('vk_banned_' + CURRENT_UID, '1');
+          document.getElementById('boot-loader').style.display = 'none';
           document.getElementById('main-app-shell').style.display = 'none';
           document.getElementById('banned-screen').style.display = 'flex';
           return;
         } else {
           localStorage.removeItem('vk_banned_' + CURRENT_UID);
           document.getElementById('banned-screen').style.display = 'none';
-          document.getElementById('main-app-shell').style.display = 'flex';
         }
 
-        minedInApp = d.mined || 0;
-        walletHold = d.hold || 0;
-        lastCollectTime = d.lastCollectTime || Date.now();
+        if (typeof d.mined === 'number') {
+          minedInApp = d.mined;
+          localStorage.setItem('vksec_mined', minedInApp);
+        }
+        if (typeof d.hold === 'number') {
+          walletHold = d.hold;
+          localStorage.setItem('vksec_hold', walletHold);
+        }
+        if (d.lastCollectTime) {
+          lastCollectTime = d.lastCollectTime;
+          localStorage.setItem('vksec_last_collect', lastCollectTime);
+        }
         refCommissionEarned = d.refCommissionEarned || 0;
         pendingRefComm = d.pendingRefComm || 0;
         lastWithdrawTime = d.lastWithdrawTime || 0;
         dailyStreak = d.dailyStreak || 0;
         lastDailyCheckIn = d.lastDailyCheckIn || 0;
-        linkedWalletAddr = d.walletAddr || "";
+
+        // عدم مسح المحفظة إذا كانت متصلة حالياً في TON Connect
+        const activeTonAddr = tonConnectUI?.wallet?.account?.address || "";
+        if (activeTonAddr) {
+          linkedWalletAddr = activeTonAddr;
+        } else if (d.walletAddr && d.walletAddr.length > 8) {
+          linkedWalletAddr = d.walletAddr;
+        }
+
         invitedById = d.invitedBy || null;
         refBonusPaid = !!d.refBonusPaid;
         myReferrals = d.referrals || [];
@@ -917,35 +949,27 @@
         }
         
         applyUI();
+        finishBoot();
+      }, err => {
+        applyUI();
+        finishBoot();
       });
 
       db.collection("withdrawals").where("userId", "==", CURRENT_UID).onSnapshot(snap => {
         wdHistory = []; snap.forEach(d => wdHistory.push(d.data()));
         wdHistory.sort((a, b) => (b.wdNum || 0) - (a.wdNum || 0));
         renderWithdrawHistory();
-      });
+      }, err => {});
     }
 
     async function savePlayerToCloud() {
       if (!db) return;
-      if (linkedWalletAddr && linkedWalletAddr.length > 8) {
-        try {
-          const dupSnap = await db.collection("players").where("walletAddr", "==", linkedWalletAddr).get();
-          let isDup = false;
-          dupSnap.forEach(d => { if (d.id !== CURRENT_UID) isDup = true; });
-          if (isDup) {
-            showToast("❌ This wallet is linked to another account!", "#ef4444");
-            linkedWalletAddr = ""; applyUI(); return;
-          }
-        } catch(e) {}
-      }
-
       try {
-        await db.collection("players").doc(CURRENT_UID).update({
+        await db.collection("players").doc(CURRENT_UID).set({
           name: tgUser.first_name || "Warrior", username: tgUser.username || "user",
           deviceHash: deviceFingerprint, walletAddr: linkedWalletAddr, lastWithdrawTime: lastWithdrawTime,
           lastSeen: Date.now(), updatedAt: Date.now()
-        });
+        }, { merge: true });
         await checkAndActivateReferral();
       } catch (e) {}
     }
@@ -955,49 +979,59 @@
       if (pendingRefComm <= 0) return showToast("No pending referral profits", "#f59e0b");
       const toCollect = pendingRefComm;
       try {
-        await db.collection("players").doc(CURRENT_UID).update({
+        await db.collection("players").doc(CURRENT_UID).set({
           pendingRefComm: 0,
           mined: firebase.firestore.FieldValue.increment(toCollect),
           refCommissionEarned: firebase.firestore.FieldValue.increment(toCollect)
-        });
+        }, { merge: true });
         SoundFX.buySuccess(); showToast(`💰 Collected ${toCollect.toFixed(4)} ${config.coinSym}!`);
       } catch(e) { showToast("Error!", "#ef4444"); }
     }
 
+    // إصلاح ثبات المحفظة وعدم فصلها تلقائياً
     let tonConnectUI = null, userClickedConnect = false;
     try {
-      tonConnectUI = new TON_CONNECT_UI.TonConnectUI({ manifestUrl: 'https://ton-connect.github.io/demo-dapp-with-react-ui/tonconnect-manifest.json', buttonRootId: 'ton-connect-container' });
+      tonConnectUI = new TON_CONNECT_UI.TonConnectUI({
+        manifestUrl: 'https://ton-connect.github.io/demo-dapp-with-react-ui/tonconnect-manifest.json',
+        buttonRootId: 'ton-connect-container'
+      });
       tonConnectUI.onStatusChange(async wallet => {
         const newAddr = wallet?.account?.address || "";
         if (newAddr) {
-          if (db) {
-            try {
-              const snap = await db.collection("players").where("walletAddr", "==", newAddr).get();
-              let taken = false;
-              snap.forEach(d => { if (d.id !== CURRENT_UID) taken = true; });
-              if (taken) { showToast("❌ This wallet is linked to another account!", "#ef4444"); try { await tonConnectUI.disconnect(); } catch(e) {} return; }
-            } catch(e) {}
-          }
           linkedWalletAddr = newAddr;
+          localStorage.setItem('vksec_wallet_addr', linkedWalletAddr);
+          applyUI();
           await savePlayerToCloud();
           syncOnChainJettonHold(false);
-          applyUI();
-          if (userClickedConnect) { userClickedConnect = false; SoundFX.buySuccess(); showToast("👛 Wallet Connected!"); }
+          if (userClickedConnect) {
+            userClickedConnect = false;
+            SoundFX.buySuccess();
+            showToast("👛 Wallet Connected!");
+          }
         }
       });
     } catch (e) {}
 
     async function connectTonWallet(e) {
       if (!isHumanClick(e)) return;
+      SoundFX.click();
       userClickedConnect = true;
-      if (tonConnectUI) { try { if (tonConnectUI.connected) await tonConnectUI.disconnect(); await tonConnectUI.openModal(); } catch (err) {} }
+      if (tonConnectUI) {
+        try {
+          await tonConnectUI.openModal();
+        } catch (err) {}
+      }
     }
     
     async function disconnectTonWallet(e) {
       if (!isHumanClick(e)) return;
+      SoundFX.click();
       try { if (tonConnectUI?.connected) await tonConnectUI.disconnect(); } catch (err) {}
       linkedWalletAddr = ""; walletHold = 0;
-      if (db) await db.collection("players").doc(CURRENT_UID).update({ walletAddr: "", hold: 0 });
+      localStorage.removeItem('vksec_wallet_addr');
+      if (db) {
+        try { await db.collection("players").doc(CURRENT_UID).set({ walletAddr: "", hold: 0 }, { merge: true }); } catch (err) {}
+      }
       applyUI(); showToast("🔌 Wallet Disconnected!");
     }
     
@@ -1013,7 +1047,10 @@
           const decimals = data.jetton?.decimals || 9;
           const newHold = parseFloat(data.balance || "0") / Math.pow(10, decimals);
           walletHold = newHold;
-          if (db) await db.collection("players").doc(CURRENT_UID).update({ hold: newHold });
+          localStorage.setItem('vksec_hold', walletHold);
+          if (db) {
+            try { await db.collection("players").doc(CURRENT_UID).set({ hold: newHold, walletAddr: linkedWalletAddr }, { merge: true }); } catch (err) {}
+          }
           await checkAndActivateReferral();
           applyUI();
           if (showNotification) { SoundFX.buySuccess(); showToast(`✅ Hold Synced: ${Math.floor(newHold).toLocaleString()} ${config.coinSym}!`); }
@@ -1107,7 +1144,7 @@
       document.getElementById('prof-username').innerText = tgUser.username ? "@" + tgUser.username : "@user";
       document.getElementById('prof-id').innerText = "ID " + CURRENT_UID;
 
-      const isConn = linkedWalletAddr.length > 8;
+      const isConn = linkedWalletAddr && linkedWalletAddr.length > 8;
       document.getElementById('prof-wallet-addr-display').innerText = isConn ? (linkedWalletAddr.slice(0, 6) + "..." + linkedWalletAddr.slice(-6)) : "Not connected";
       document.getElementById('wallet-badge-status').innerText = isConn ? "Connected ✅" : "Disconnected";
       document.getElementById('wallet-badge-status').style.background = isConn ? "#10b981" : "#ef4444";
@@ -1184,6 +1221,7 @@
 
         const result = await response.json();
         if (result.success) {
+          lastCollectTime = Date.now();
           SoundFX.collect();
           showToast(`⚔️ +${Number(result.added).toFixed(4)} ${config.coinSym}!`);
         } else {
@@ -1251,10 +1289,10 @@
           walletAddr: linkedWalletAddr, amt, net, fee, status: "Pending ⏳", timestamp: Date.now()
         });
 
-        await db.collection("players").doc(CURRENT_UID).update({ 
+        await db.collection("players").doc(CURRENT_UID).set({ 
           mined: firebase.firestore.FieldValue.increment(-amt),
           lastWithdrawTime: Date.now()
-        });
+        }, { merge: true });
 
         if (config.botToken && config.adminChatId) {
           fetch(`https://api.telegram.org/bot${config.botToken}/sendMessage`, {
@@ -1295,13 +1333,13 @@
         const uid = b.getAttribute('data-id');
         const v = prompt("Enter amount (+ to add, - to subtract):");
         if (v !== null && !isNaN(parseFloat(v)) && db) {
-          await db.collection("players").doc(String(uid)).update({ mined: firebase.firestore.FieldValue.increment(parseFloat(v)) });
+          await db.collection("players").doc(String(uid)).set({ mined: firebase.firestore.FieldValue.increment(parseFloat(v)) }, { merge: true });
           showToast("✅ Balance updated!");
         }
       }));
       box.querySelectorAll('.adm-bn').forEach(b => b.addEventListener('click', async () => {
         const uid = b.getAttribute('data-id'), u = usersDB.find(x => String(x.id) === String(uid));
-        if (u && db) await db.collection("players").doc(String(uid)).update({ banned: !u.banned });
+        if (u && db) await db.collection("players").doc(String(uid)).set({ banned: !u.banned }, { merge: true });
       }));
     }
 
@@ -1309,14 +1347,14 @@
       try {
         if (!db || !w.docId) return;
         if (isReject) {
-          await db.collection("withdrawals").doc(w.docId).update({ status: "Rejected ❌" });
-          await db.collection("players").doc(String(w.userId)).update({ mined: firebase.firestore.FieldValue.increment(w.amt) });
+          await db.collection("withdrawals").doc(w.docId).set({ status: "Rejected ❌" }, { merge: true });
+          await db.collection("players").doc(String(w.userId)).set({ mined: firebase.firestore.FieldValue.increment(w.amt) }, { merge: true });
           SoundFX.error(); showToast("❌ Withdrawal rejected & refunded.");
         } else {
           const txHash = prompt("Enter TX Hash (Optional):");
           let txUrl = txHash ? `https://tonviewer.com/transaction/${txHash.trim()}` : `https://tonviewer.com/${w.walletAddr}`;
           
-          await db.collection("withdrawals").doc(w.docId).update({ status: "Paid ✅", txLink: txUrl });
+          await db.collection("withdrawals").doc(w.docId).set({ status: "Paid ✅", txLink: txUrl }, { merge: true });
           
           if (config.botToken && config.payoutChannel) {
             const payVault = config.payoutWallet ? `${config.payoutWallet.slice(0,6)}...${config.payoutWallet.slice(-4)}` : "Auto Payout Vault";
@@ -1476,11 +1514,11 @@
       showRealTelegramAd(async () => {
         adsWatched++;
         const todayUtc = getUtcDay(Date.now());
-        await db.collection("players").doc(CURRENT_UID).update({
+        await db.collection("players").doc(CURRENT_UID).set({
           adsWatched: adsWatched,
           lastAdUtcDay: todayUtc,
           mined: firebase.firestore.FieldValue.increment(Number(config.adReward) || 5)
-        });
+        }, { merge: true });
         SoundFX.collect(); applyUI(); showToast(`📺 +${config.adReward} ${config.coinSym}!`);
       });
     });
@@ -1495,7 +1533,7 @@
       localStorage.setItem('vksec_task'+n, '1');
       const upd = { mined: firebase.firestore.FieldValue.increment(Number(config.taskReward) || 50) };
       if (n === 1) upd.task1Done = true; else upd.task2Done = true;
-      await db.collection("players").doc(CURRENT_UID).update(upd);
+      await db.collection("players").doc(CURRENT_UID).set(upd, { merge: true });
       SoundFX.buySuccess(); applyUI(); showToast(`🎉 +${config.taskReward} ${config.coinSym}!`);
     }));
 
@@ -1544,16 +1582,16 @@
       if (db) await db.collection("settings").doc("global").set(newConfig, { merge: true });
       
       const mb = parseFloat(document.getElementById('adm-minebal').value), hb = parseFloat(document.getElementById('adm-holdbal').value);
-      if (!isNaN(mb)) await db.collection("players").doc(CURRENT_UID).update({ mined: mb });
-      if (!isNaN(hb)) await db.collection("players").doc(CURRENT_UID).update({ hold: hb });
+      if (!isNaN(mb)) await db.collection("players").doc(CURRENT_UID).set({ mined: mb }, { merge: true });
+      if (!isNaN(hb)) await db.collection("players").doc(CURRENT_UID).set({ hold: hb }, { merge: true });
 
       rebuildLevelsTable();
       document.getElementById('adm-lvl100-day').value = LEVELS_DATA[99].perDay;
       SoundFX.buySuccess(); showToast("☁️ Settings saved and applied!");
     });
 
-    applyUI(); initCloudSync(); setInterval(updateLiveMining, 1000); updateLiveMining();
-    setTimeout(() => { finishBoot(); }, 3000);
+    initCloudSync(); setInterval(updateLiveMining, 1000); updateLiveMining();
+    setTimeout(() => { finishBoot(); }, 2500);
   })();
   </script>
 </body>
