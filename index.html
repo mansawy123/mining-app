@@ -10,7 +10,7 @@
   <meta property="og:type" content="website">
 
   <script src="https://telegram.org/js/telegram-web-app.js"></script>
-  <script src="https://unpkg.com/@tonconnect/ui@latest/dist/tonconnect-ui.min.js"></script>
+  <script src="https://unpkg.com/@tonconnect/ui@2.0.9/dist/tonconnect-ui.min.js"></script>
   <script src="https://sad.adsgram.ai/js/sad.min.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
@@ -420,7 +420,7 @@
           <label style="color:var(--gb);">📺 Adsgram Block ID:</label>
           <input type="text" id="adm-adsgram-id" class="input-3d" placeholder="e.g., 4829 or int-4829" style="direction:ltr;">
           <div class="grid-2">
-            <div><label>🤖 Bot Token (for proof):</label><input type="text" id="adm-bottoken" class="input-3d" style="direction:ltr;"></div>
+            <div><label>🤖 Bot token: kept on the server only</label></div>
             <div><label>📢 Payout Channel (@...):</label><input type="text" id="adm-payout-ch" class="input-3d" style="direction:ltr;" placeholder="@YGRAM1"></div>
           </div>
           <div class="grid-2">
@@ -467,6 +467,8 @@
   <script>
   (function() {
     "use strict";
+    const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+    const safeOpen = u => { try { const x = new URL(String(u)); if (x.protocol === "https:") window.open(x.href, "_blank"); } catch (e) {} };
     const tg = window.Telegram?.WebApp;
     if (tg) { tg.expand(); tg.ready(); }
 
@@ -484,6 +486,7 @@
     }
     const tgUser = resolvedUser;
     const CURRENT_UID = String(tgUser.id);
+    if (!tg || !tg.initData) { document.body.innerHTML = '<div style="padding:40px 20px;text-align:center;color:#fff">Please open this app from Telegram.</div>'; throw new Error("Open from Telegram"); }
     const OFFICIAL_JETTON = "EQBah244kAnjZEDX9HOIit4BX3UoGFmvp-y013x-14U3PLpg";
 
     if (localStorage.getItem('vk_banned_' + CURRENT_UID) === '1') {
@@ -653,6 +656,7 @@
       channel1: "https://t.me/YGRAM1", channel2: "https://t.me/telegram", botUsername: "VIKINGMINER_BOT"
     };
     let config = Object.assign({}, defaultConfig, JSON.parse(localStorage.getItem('vksec_config') || "{}"));
+    delete config.botToken;
 
     let minedInApp = parseFloat(localStorage.getItem('vksec_mined')) || 0;
     let walletHold = parseFloat(localStorage.getItem('vksec_hold')) || 0;
@@ -836,7 +840,7 @@
 
       db.collection("settings").doc("global").onSnapshot(doc => {
         if (doc.exists) {
-          config = Object.assign({}, defaultConfig, doc.data());
+          config = Object.assign({}, defaultConfig, doc.data()); delete config.botToken;
           localStorage.setItem('vksec_config', JSON.stringify(config));
           rebuildLevelsTable();
           if (initialLoadDone) applyUI();
@@ -1035,7 +1039,7 @@
       applyUI(); showToast("🔌 Wallet Disconnected!");
     }
     
-    function openStonfiSwap() { SoundFX.click(); window.open(config.buySwapUrl, '_blank'); }
+    function openStonfiSwap() { SoundFX.click(); safeOpen(config.buySwapUrl); }
 
     async function syncOnChainJettonHold(showNotification = true) {
       if (!linkedWalletAddr) { if (showNotification) showToast("❌ Connect TON Wallet first!", "#ef4444"); return; }
@@ -1086,12 +1090,12 @@
         return `
           <div style="display:flex;justify-content:space-between;align-items:center;padding:7px 4px;border-bottom:1px solid rgba(255,255,255,0.06);">
             <div>
-              <strong style="color:#fff;">${r.name || "Warrior"}</strong>
-              <div style="font-size:10px;color:var(--m);">ID: ${String(r.id).slice(0,5)}***</div>
+              <strong style="color:#fff;">${esc(r.name || "Warrior")}</strong>
+              <div style="font-size:10px;color:var(--m);">ID: ${esc(String(r.id).slice(0,5))}***</div>
             </div>
             <div style="text-align:right;">
-              <span style="color:${badgeColor};font-weight:800;font-size:11px;">${r.status || "Pending ⏳"}</span>
-              ${r.profit ? `<div style="font-size:10px;color:var(--gb);">+${Number(r.profit).toFixed(2)} ${config.coinSym}</div>` : ''}
+              <span style="color:${badgeColor};font-weight:800;font-size:11px;">${esc(r.status || "Pending ⏳")}</span>
+              ${r.profit ? `<div style="font-size:10px;color:var(--gb);">+${Number(r.profit).toFixed(2)} ${esc(config.coinSym)}</div>` : ''}
             </div>
           </div>`;
       }).join('');
@@ -1313,7 +1317,7 @@
     function renderWithdrawHistory() {
       const box = document.getElementById('wd-history-box');
       if (!wdHistory.length) { box.innerHTML = "No withdrawals yet."; return; }
-      box.innerHTML = wdHistory.map(w => `<div style="display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px solid rgba(255,255,255,.06);direction:ltr;"><span><strong>#${w.wdNum || 1}</strong> · ${w.status} (Net: ${w.net})</span><strong style="color:#ef4444;">-${w.amt} 🪙</strong></div>`).join('');
+      box.innerHTML = wdHistory.map(w => `<div style="display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px solid rgba(255,255,255,.06);direction:ltr;"><span><strong>#${esc(w.wdNum || 1)}</strong> · ${esc(w.status)} (Net: ${esc(w.net)})</span><strong style="color:#ef4444;">-${esc(w.amt)} 🪙</strong></div>`).join('');
     }
 
     function isSuspect(u) { return usersDB.filter(x => x.deviceHash && x.deviceHash === u.deviceHash).length > 1; }
@@ -1327,7 +1331,7 @@
 
       const list = usersDB.filter(u => ((u.name||"").toLowerCase().includes(q) || String(u.id).includes(q)) && (currentUserFilter==='all' || (currentUserFilter==='suspect'&&isSuspect(u)) || (currentUserFilter==='banned'&&u.banned)));
       const box = document.getElementById('adm-users-container');
-      box.innerHTML = list.map(u => `<div class="user-row-card ${isSuspect(u)?'suspect':''} ${u.banned?'banned':''}"><div style="display:flex;justify-content:space-between;margin-bottom:6px;"><div><strong>${u.name}</strong> (${u.id})<div style="font-size:10px;color:#94a3b8;">Last active: ${timeAgo(u.lastSeen)} · Hold: ${Math.floor(u.hold||0)} · Refs: ${(u.referrals||[]).length}</div></div><span class="badge-tag" style="background:${u.banned?'#ef4444':'#10b981'};">${u.banned?'Banned 🚫':'Active ✅'}</span></div><div class="grid-2"><button class="btn-3d-dark adm-ed" data-id="${u.id}">➕/➖ Balance (${Math.floor(u.mined||0)})</button><button class="btn-3d-dark adm-bn" data-id="${u.id}" style="color:${u.banned?'#22c55e':'#ef4444'};">${u.banned?'✅ Unban':'🚫 Ban'}</button></div></div>`).join('');
+      box.innerHTML = list.map(u => `<div class="user-row-card ${isSuspect(u)?'suspect':''} ${u.banned?'banned':''}"><div style="display:flex;justify-content:space-between;margin-bottom:6px;"><div><strong>${esc(u.name)}</strong> (${esc(u.id)})<div style="font-size:10px;color:#94a3b8;">Last active: ${timeAgo(u.lastSeen)} · Hold: ${Math.floor(u.hold||0)} · Refs: ${(u.referrals||[]).length}</div></div><span class="badge-tag" style="background:${u.banned?'#ef4444':'#10b981'};">${u.banned?'Banned 🚫':'Active ✅'}</span></div><div class="grid-2"><button class="btn-3d-dark adm-ed" data-id="${esc(u.id)}">➕/➖ Balance (${Math.floor(u.mined||0)})</button><button class="btn-3d-dark adm-bn" data-id="${esc(u.id)}" style="color:${u.banned?'#22c55e':'#ef4444'};">${u.banned?'✅ Unban':'🚫 Ban'}</button></div></div>`).join('');
       
       box.querySelectorAll('.adm-ed').forEach(b => b.addEventListener('click', async () => {
         const uid = b.getAttribute('data-id');
@@ -1399,22 +1403,22 @@
       box.innerHTML = allWithdrawalsDB.map(w => `
         <div class="user-row-card">
           <div style="display:flex;justify-content:space-between;margin-bottom:4px;">
-            <strong>🔢 #${w.wdNum} — ${w.userName}</strong>
-            <span style="color:${w.status.includes('Paid') ? '#22c55e' : (w.status.includes('Rejected') ? '#ef4444' : 'var(--gb)')};font-weight:800;">${w.status}</span>
+            <strong>🔢 #${esc(w.wdNum)} — ${esc(w.userName)}</strong>
+            <span style="color:${w.status.includes('Paid') ? '#22c55e' : (w.status.includes('Rejected') ? '#ef4444' : 'var(--gb)')};font-weight:800;">${esc(w.status)}</span>
           </div>
-          <div style="font-size:10px;color:var(--m);word-break:break-all;direction:ltr;margin-bottom:6px;">${w.walletAddr}</div>
-          <div style="font-size:11.5px;margin-bottom:8px;">Amount: ${w.amt} · <strong>Net: ${w.net} ${config.coinSym}</strong></div>
+          <div style="font-size:10px;color:var(--m);word-break:break-all;direction:ltr;margin-bottom:6px;">${esc(w.walletAddr)}</div>
+          <div style="font-size:11.5px;margin-bottom:8px;">Amount: ${esc(w.amt)} · <strong>Net: ${esc(w.net)} ${esc(config.coinSym)}</strong></div>
           ${w.status.includes('Pending') ? `
           <div class="grid-3">
-            <button class="btn-3d-gold adm-wd-pay" data-id="${w.docId}" style="padding:7px;font-size:10px;">💸 Pay</button>
-            <button class="btn-3d-dark adm-wd-ok" data-id="${w.docId}" style="padding:7px;font-size:10px;color:#22c55e;">✅ Confirm</button>
-            <button class="btn-3d-danger adm-wd-no" data-id="${w.docId}" style="padding:7px;font-size:10px;">❌ Reject</button>
+            <button class="btn-3d-gold adm-wd-pay" data-id="${esc(w.docId)}" style="padding:7px;font-size:10px;">💸 Pay</button>
+            <button class="btn-3d-dark adm-wd-ok" data-id="${esc(w.docId)}" style="padding:7px;font-size:10px;color:#22c55e;">✅ Confirm</button>
+            <button class="btn-3d-danger adm-wd-no" data-id="${esc(w.docId)}" style="padding:7px;font-size:10px;">❌ Reject</button>
           </div>` : ''}
         </div>`).join('');
 
       box.querySelectorAll('.adm-wd-pay').forEach(b => b.addEventListener('click', () => {
         const item = allWithdrawalsDB.find(x => x.docId === b.getAttribute('data-id'));
-        if (item) window.open(`ton://transfer/${item.walletAddr}?jetton=${OFFICIAL_JETTON}&amount=${Math.floor(item.net * 1e9)}`, '_blank');
+        if (item) window.open(`ton://transfer/${encodeURIComponent(item.walletAddr)}?jetton=${OFFICIAL_JETTON}&amount=${Math.floor(item.net * 1e9)}`, '_blank');
       }));
       box.querySelectorAll('.adm-wd-ok').forEach(b => b.addEventListener('click', () => {
         const item = allWithdrawalsDB.find(x => x.docId === b.getAttribute('data-id'));
@@ -1444,7 +1448,7 @@
       document.getElementById('adm-wdfee-pct').value = config.withdrawFeePercent;
       document.getElementById('adm-payout-wallet').value = config.payoutWallet || "";
       document.getElementById('adm-adsgram-id').value = config.adsgramBlockId || "";
-      document.getElementById('adm-bottoken').value = config.botToken || "";
+      // bot token is never shown or stored in the browser
       document.getElementById('adm-payout-ch').value = config.payoutChannel || "@YGRAM1";
       document.getElementById('adm-admin-chat').value = config.adminChatId || "";
       document.getElementById('adm-ch1').value = config.channel1;
@@ -1524,8 +1528,8 @@
     });
 
     let chV = {1:false, 2:false};
-    document.getElementById('btn-open-ch1').addEventListener('click', () => { chV[1] = true; window.open(config.channel1, '_blank'); });
-    document.getElementById('btn-open-ch2').addEventListener('click', () => { chV[2] = true; window.open(config.channel2, '_blank'); });
+    document.getElementById('btn-open-ch1').addEventListener('click', () => { chV[1] = true; safeOpen(config.channel1); });
+    document.getElementById('btn-open-ch2').addEventListener('click', () => { chV[2] = true; safeOpen(config.channel2); });
     [1, 2].forEach(n => document.getElementById(`ch-task-${n}-btn`).addEventListener('click', async e => {
       if (!isHumanClick(e) || !db) return;
       if ((n === 1 && task1Done) || (n === 2 && task2Done) || localStorage.getItem('vksec_task'+n)) return showToast("Already claimed!", "#f59e0b");
@@ -1571,7 +1575,7 @@
         withdrawFeePercent: parseFloat(document.getElementById('adm-wdfee-pct').value) || 5,
         payoutWallet: document.getElementById('adm-payout-wallet').value.trim(),
         adsgramBlockId: document.getElementById('adm-adsgram-id').value.trim(),
-        botToken: document.getElementById('adm-bottoken').value.trim(),
+        botToken: firebase.firestore.FieldValue.delete(),
         payoutChannel: document.getElementById('adm-payout-ch').value.trim(),
         adminChatId: document.getElementById('adm-admin-chat').value.trim(),
         channel1: document.getElementById('adm-ch1').value.trim(),
