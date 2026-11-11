@@ -795,6 +795,11 @@
     async function initCloudSync() {
       if (!db) { finishBoot(); return; }
 
+      // إصلاح مشكلة فصل المحفظة
+      if (tonConnectUI && tonConnectUI.connected) {
+        linkedWalletAddr = tonConnectUI.account.address;
+      }
+
       db.collection("settings").doc("global").onSnapshot(doc => {
         if (doc.exists) {
           config = Object.assign({}, defaultConfig, doc.data());
@@ -1102,10 +1107,19 @@
       const { cur } = getCurrentLevelObj();
       const rawElapsed = Math.max(0, (Date.now() - lastCollectTime) / 1000);
       
-      // تعديل وقت الانتظار لثانية واحدة بدلاً من 10
       if (rawElapsed < 1) { SoundFX.error(); return showToast("⏳ Wait a second!", "#f59e0b"); }
       
       isCollecting = true; 
+
+      // Optimistic UI Update - تحديث فوري
+      const cappedElapsed = Math.min(86400, rawElapsed);
+      const pending = cappedElapsed * (cur.perDay / 86400);
+
+      minedInApp += pending;
+      lastCollectTime = Date.now();
+      applyUI();
+      SoundFX.collect();
+      showToast(`⚔️ +${pending.toFixed(4)} ${config.coinSym}!`);
 
       try {
         const response = await fetch("https://collectmining-593041882697.europe-west1.run.app", {
@@ -1116,13 +1130,14 @@
 
         const result = await response.json();
         
-        if (result.success) {
-          SoundFX.collect();
-          showToast(`⚔️ +${result.added.toFixed(4)} ${config.coinSym}!`);
-        } else {
+        if (!result.success) {
+          minedInApp -= pending;
+          applyUI();
           showToast("❌ " + result.error, "#ef4444");
         }
       } catch (err) {
+        minedInApp -= pending;
+        applyUI();
         showToast("Error connecting to server", "#ef4444");
       } finally {
         isCollecting = false; 
